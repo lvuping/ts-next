@@ -93,10 +93,11 @@ function migrateSchema(db: Database.Database) {
   if (!hasCategoryId) {
     console.log('Adding category_id column to notes table...');
     try {
-      db.exec('ALTER TABLE notes ADD COLUMN category_id INTEGER');
+      db.exec('ALTER TABLE notes ADD COLUMN category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL');
       console.log('Successfully added category_id column');
     } catch (error) {
-      console.error('Error adding category_id column:', error);
+      // If the column already exists or there's another error, log it but continue
+      console.log('Note: Could not add category_id column:', error);
     }
   }
 }
