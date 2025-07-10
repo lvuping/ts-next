@@ -15,6 +15,7 @@ import { ArrowLeft, X, Trash2, Wand2, Eye, Code } from 'lucide-react';
 import Link from 'next/link';
 import { Note, NoteInput } from '@/types/note';
 import { CodeSnippet } from '@/components/notes/code-snippet';
+import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 
 const LANGUAGES = [
   'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 'go', 'rust',
@@ -37,6 +38,8 @@ export default function EditNotePage({ params }: Props) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [assistPrompt, setAssistPrompt] = useState('');
   const [assistLoading, setAssistLoading] = useState(false);
+  const [showDiffViewer, setShowDiffViewer] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
   const [formData, setFormData] = useState<Partial<NoteInput>>({
     title: '',
     content: '',
@@ -159,13 +162,37 @@ export default function EditNotePage({ params }: Props) {
       }
 
       const data = await response.json();
-      setFormData({ ...formData, content: data.code });
-      setAssistPrompt('');
+      
+      // If there's existing code content, show the diff viewer
+      if (formData.content && formData.content.trim()) {
+        setGeneratedCode(data.code);
+        setShowDiffViewer(true);
+      } else {
+        // If no existing code, directly apply the generated code
+        setFormData({ ...formData, content: data.code });
+        setAssistPrompt('');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get AI assistance');
     } finally {
       setAssistLoading(false);
     }
+  };
+
+  const handleApplyGeneratedCode = () => {
+    setFormData({ ...formData, content: generatedCode });
+    setAssistPrompt('');
+    setGeneratedCode('');
+  };
+
+  const handleCancelGeneratedCode = () => {
+    setAssistPrompt('');
+    setGeneratedCode('');
+  };
+
+  const handleRegenerateCode = async () => {
+    setShowDiffViewer(false);
+    await handleAssist();
   };
 
   if (loading) {
@@ -424,6 +451,17 @@ export default function EditNotePage({ params }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CodeDiffViewer
+        originalCode={formData.content || ''}
+        generatedCode={generatedCode}
+        language={formData.language || 'plaintext'}
+        onApply={handleApplyGeneratedCode}
+        onCancel={handleCancelGeneratedCode}
+        onRegenerate={handleRegenerateCode}
+        open={showDiffViewer}
+        onOpenChange={setShowDiffViewer}
+      />
     </div>
   );
 }
