@@ -10,6 +10,7 @@ export function getDb() {
   db.pragma('foreign_keys = ON');
   
   createTables(db);
+  migrateSchema(db);
   migrateCategories(db);
   
   return db;
@@ -82,6 +83,22 @@ function createTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_note_tags_tag_id ON note_tags(tag_id);
     CREATE INDEX IF NOT EXISTS idx_categories_position ON categories(position);
   `);
+}
+
+function migrateSchema(db: Database.Database) {
+  // Check if category_id column exists
+  const columns = db.prepare("PRAGMA table_info(notes)").all() as Array<{ name: string }>;
+  const hasCategoryId = columns.some(col => col.name === 'category_id');
+  
+  if (!hasCategoryId) {
+    console.log('Adding category_id column to notes table...');
+    try {
+      db.exec('ALTER TABLE notes ADD COLUMN category_id INTEGER');
+      console.log('Successfully added category_id column');
+    } catch (error) {
+      console.error('Error adding category_id column:', error);
+    }
+  }
 }
 
 function migrateCategories(db: Database.Database) {
