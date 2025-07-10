@@ -17,6 +17,26 @@ interface DayData {
 export function ContributionGraph({ notes }: ContributionGraphProps) {
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   
+  // Define helper functions before using them
+  const getLevel = (count: number): number => {
+    if (count === 0) return 0;
+    if (count <= 2) return 1;
+    if (count <= 4) return 2;
+    if (count <= 6) return 3;
+    return 4;
+  };
+  
+  const getLevelColor = (level: number): string => {
+    switch (level) {
+      case 0: return 'bg-gray-100 dark:bg-gray-800';
+      case 1: return 'bg-green-200 dark:bg-green-900';
+      case 2: return 'bg-green-300 dark:bg-green-700';
+      case 3: return 'bg-green-400 dark:bg-green-600';
+      case 4: return 'bg-green-500 dark:bg-green-500';
+      default: return 'bg-gray-100 dark:bg-gray-800';
+    }
+  };
+  
   const contributionData = useMemo(() => {
     const today = new Date();
     const oneYearAgo = new Date(today);
@@ -65,25 +85,6 @@ export function ContributionGraph({ notes }: ContributionGraphProps) {
     
     return weeks;
   }, [notes]);
-  
-  const getLevel = (count: number): number => {
-    if (count === 0) return 0;
-    if (count <= 2) return 1;
-    if (count <= 4) return 2;
-    if (count <= 6) return 3;
-    return 4;
-  };
-  
-  const getLevelColor = (level: number): string => {
-    switch (level) {
-      case 0: return 'bg-gray-100 dark:bg-gray-800';
-      case 1: return 'bg-green-200 dark:bg-green-900';
-      case 2: return 'bg-green-300 dark:bg-green-700';
-      case 3: return 'bg-green-400 dark:bg-green-600';
-      case 4: return 'bg-green-500 dark:bg-green-500';
-      default: return 'bg-gray-100 dark:bg-gray-800';
-    }
-  };
   
   const months = useMemo(() => [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
