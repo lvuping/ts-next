@@ -1,7 +1,7 @@
 'use client';
 
 import { useViewMode } from '@/hooks/use-view-mode';
-import { Eye, Edit } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export function ViewModeIndicator() {

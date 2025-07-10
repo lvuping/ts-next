@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Edit, Heart } from 'lucide-react';
 import Link from 'next/link';
-import { CodeBlock } from '@/components/ui/code-block';
+import { CodeSnippet } from '@/components/notes/code-snippet';
 
-export default async function ViewNotePage({ params }: { params: { id: string } }) {
-  const note = await getNoteById(params.id);
+export default async function ViewNotePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const note = await getNoteById(id);
 
   if (!note) {
     notFound();
@@ -51,10 +52,9 @@ export default async function ViewNotePage({ params }: { params: { id: string } 
           </div>
         </CardHeader>
         <CardContent>
-          <CodeBlock
+          <CodeSnippet
             code={note.content}
             language={note.language}
-            showLineNumbers
           />
         </CardContent>
       </Card>

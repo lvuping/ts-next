@@ -1,6 +1,21 @@
-import type { Note, NoteInput, NotesData, NoteTemplate } from '@/types/note';
+import type { Note, NoteInput, NoteTemplate } from '@/types/note';
 import { getDb, migrateFromJson } from './db';
 import Database from 'better-sqlite3';
+
+interface NoteRow {
+  id: string;
+  title: string;
+  content: string;
+  language: string;
+  category: string;
+  favorite: number;
+  createdAt: string;
+  updatedAt: string;
+  folderId: string | null;
+  template: string | null;
+  tags: string | null;
+  relatedNotes: string | null;
+}
 
 const templates: NoteTemplate[] = [
   {
@@ -98,7 +113,7 @@ export async function getAllNotes(filters?: {
   `;
   
   const conditions: string[] = [];
-  const params: any[] = [];
+  const params: unknown[] = [];
   
   if (filters?.search) {
     conditions.push('(n.title LIKE ? OR n.content LIKE ?)');
@@ -133,7 +148,7 @@ export async function getAllNotes(filters?: {
   
   query += ` ORDER BY ${sortColumn} ${sortOrder.toUpperCase()}`;
   
-  const rows = db.prepare(query).all(...params) as any[];
+  const rows = db.prepare(query).all(...params) as NoteRow[];
   
   return rows.map(row => ({
     id: row.id,
@@ -145,8 +160,8 @@ export async function getAllNotes(filters?: {
     favorite: row.favorite === 1,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    folderId: row.folderId,
-    template: row.template,
+    folderId: row.folderId || undefined,
+    template: row.template || undefined,
     relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : []
   }));
 }
@@ -174,7 +189,7 @@ export async function getNoteById(id: string): Promise<Note | null> {
     LEFT JOIN related_notes rn ON n.id = rn.note_id
     WHERE n.id = ?
     GROUP BY n.id
-  `).get(id) as any;
+  `).get(id) as NoteRow | undefined;
   
   if (!row) return null;
   
@@ -188,8 +203,8 @@ export async function getNoteById(id: string): Promise<Note | null> {
     favorite: row.favorite === 1,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    folderId: row.folderId,
-    template: row.template,
+    folderId: row.folderId || undefined,
+    template: row.template || undefined,
     relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : []
   };
 }
@@ -221,8 +236,10 @@ export async function createNote(input: NoteInput): Promise<Note> {
     
     for (const tag of input.tags || []) {
       db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)').run(tag);
-      const tagId = (db.prepare('SELECT id FROM tags WHERE name = ?').get(tag) as any).id;
-      db.prepare('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)').run(id, tagId);
+      const tagResult = db.prepare('SELECT id FROM tags WHERE name = ?').get(tag) as { id: number } | undefined;
+      if (tagResult) {
+        db.prepare('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)').run(id, tagResult.id);
+      }
     }
     
     for (const relatedNoteId of input.relatedNotes || []) {
@@ -270,8 +287,10 @@ export async function updateNote(id: string, input: Partial<NoteInput>): Promise
       
       for (const tag of input.tags) {
         db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)').run(tag);
-        const tagId = (db.prepare('SELECT id FROM tags WHERE name = ?').get(tag) as any).id;
-        db.prepare('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)').run(id, tagId);
+        const tagResult = db.prepare('SELECT id FROM tags WHERE name = ?').get(tag) as { id: number } | undefined;
+        if (tagResult) {
+          db.prepare('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)').run(id, tagResult.id);
+        }
       }
     }
     
@@ -312,7 +331,7 @@ export async function getCategories(): Promise<string[]> {
 
 export async function getTags(): Promise<string[]> {
   const db = initDb();
-  const rows = db.prepare('SELECT DISTINCT name FROM tags ORDER BY name').all() as any[];
+  const rows = db.prepare('SELECT DISTINCT name FROM tags ORDER BY name').all() as Array<{ name: string }>;
   return rows.map(row => row.name);
 }
 

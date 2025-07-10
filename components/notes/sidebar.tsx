@@ -38,9 +38,9 @@ export function Sidebar({ categories, tags, className }: SidebarProps) {
     if (searchFromParams !== search) {
       setSearch(searchFromParams);
     }
-  }, [searchParams]);
+  }, [searchParams, search]);
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
