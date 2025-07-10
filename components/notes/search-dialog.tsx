@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Search, FileText, Hash, FolderOpen, Clock } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { Note } from '@/types/note';
-import { useViewMode } from '@/hooks/use-view-mode';
 
 interface SearchDialogProps {
   open: boolean;
@@ -60,10 +59,8 @@ export function SearchDialog({ open, onOpenChange, notes }: SearchDialogProps) {
     }
   };
 
-  const { isViewMode } = useViewMode();
-  
   const handleSelectNote = (note: Note) => {
-    const url = isViewMode ? `/notes/edit/${note.id}` : `/notes/view/${note.id}`;
+    const url = `/notes/view/${note.id}`;
     router.push(url);
     onOpenChange(false);
   };

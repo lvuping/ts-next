@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +31,7 @@ interface Props {
 export default function EditNotePage({ params }: Props) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -92,6 +93,22 @@ export default function EditNotePage({ params }: Props) {
     fetchNote();
     fetchMetadata();
   }, [id]);
+
+  // Handle AI assist from preview mode
+  useEffect(() => {
+    if (searchParams.get('ai-assist') === 'true') {
+      const aiAssistData = sessionStorage.getItem(`ai-assist-${id}`);
+      if (aiAssistData) {
+        try {
+          const { prompt } = JSON.parse(aiAssistData);
+          setAssistPrompt(prompt);
+          sessionStorage.removeItem(`ai-assist-${id}`);
+        } catch (error) {
+          console.error('Error processing AI assist data:', error);
+        }
+      }
+    }
+  }, [searchParams, id]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -211,6 +228,14 @@ export default function EditNotePage({ params }: Props) {
     setShowDiffViewer(false);
     await handleAssist();
   };
+
+  // Auto-trigger assist if coming from preview with AI assist
+  useEffect(() => {
+    if (searchParams.get('ai-assist') === 'true' && assistPrompt && formData.content && !assistLoading) {
+      handleAssist();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assistPrompt, formData.content]);
 
   if (loading) {
     return (

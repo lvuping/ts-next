@@ -32,14 +32,14 @@ export function AppLayout({ children, categories = [], tags = [] }: AppLayoutPro
       {/* Sidebar */}
       <div 
         className={cn(
-          "transition-all duration-300",
+          "transition-all duration-150 ease-in-out",
           (sidebarOpen || sidebarHovered) && !isMobile ? "w-80" : "w-0"
         )}
         onMouseEnter={() => !sidebarOpen && setSidebarHovered(true)}
         onMouseLeave={() => setSidebarHovered(false)}
       >
         <div className={cn(
-          "fixed h-full overflow-hidden transition-all duration-300 border-r",
+          "fixed h-full overflow-hidden transition-all duration-150 ease-in-out border-r bg-background",
           (sidebarOpen || sidebarHovered) && !isMobile ? "w-80" : "w-0"
         )}>
           <Suspense fallback={<LoadingSpinner />}>

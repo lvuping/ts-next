@@ -1,9 +1,10 @@
 ## Todo list
 
-1. 좌측의 Search input을 삭제해줘. 다른 Search 기능이 있기 때문에 필요없어. 
-2. 좌측패널 좌측 최상단에 PKM 이라고 적어주고, 그걸 누르면 홈으로 이동할 수있도록 해줘.
-3. 좌측패널에 mouseover 를 하면 PKM 옆에 패널숨기기 위한 아이콘을 추가해주고 누르면 숨길 수 있도록 해줘.  
-4. 좌측패널 PKM 문구 아래로 New Note 버튼을 옮겨줘
+1. Control 2번 누른후 Search 로 검색해서 들어가는 경우 default view mode를 preview 모드로 보여줘. 
+2. preview mode 의 가장 아래 부분에 AI Assistant 기능을 넣어줘. 그곳에 내용을 넣고 Assist 버튼을 버튼을 누르면 자연스럽게 edit 모드로 변경되도록 해줘. 현재는 preview로 보다가  edit mode로 변경후 진행해야 하는 점이 번거로워
+3. 좌측패널을 숨길때 너무 부자연스러워 (slow , buggy) 
+4. 현재 sample notes 가 너무 많아 . 각 category 마다 2개정도의 글만 남기고 모두 삭제해줘.
+```
 ## Must check
 - 모든 수정후엔 반드시 기능 테스트를 진행해줘. (route, event)
 - 마지막 단계에서 pnpm run build 를 실행해줘. 

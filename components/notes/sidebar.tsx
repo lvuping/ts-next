@@ -206,7 +206,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
   }
 
   return (
-    <aside className={`w-80 border-r p-6 overflow-y-auto ${className}`}>
+    <aside className={`w-80 p-6 overflow-y-auto ${className}`}>
       <SidebarContent />
     </aside>
   );
