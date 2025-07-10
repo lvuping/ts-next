@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { useEffect } from 'react';
 
 interface ViewModeStore {
-  isViewMode: boolean;
+  isViewMode: boolean; // When true, enables edit mode (inverted logic)
   setViewMode: (mode: boolean) => void;
 }
 
@@ -24,8 +24,8 @@ export function useViewMode() {
       if (event.key === 'Control') {
         const currentTime = Date.now();
         if (currentTime - lastControlTime < DOUBLE_PRESS_DELAY) {
-          setViewMode(true);
-          setTimeout(() => setViewMode(false), 5000);
+          setViewMode(true); // Enable edit mode
+          setTimeout(() => setViewMode(false), 5000); // Back to view mode after 5s
         }
         lastControlTime = currentTime;
       }

@@ -24,7 +24,7 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
   const [isDeleting, setIsDeleting] = useState(false);
   const { isViewMode } = useViewMode();
   
-  const noteUrl = isViewMode ? `/notes/view/${note.id}` : `/notes/edit/${note.id}`;
+  const noteUrl = isViewMode ? `/notes/edit/${note.id}` : `/notes/view/${note.id}`;
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this note?')) return;

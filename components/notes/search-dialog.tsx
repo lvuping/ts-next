@@ -63,7 +63,7 @@ export function SearchDialog({ open, onOpenChange, notes }: SearchDialogProps) {
   const { isViewMode } = useViewMode();
   
   const handleSelectNote = (note: Note) => {
-    const url = isViewMode ? `/notes/view/${note.id}` : `/notes/edit/${note.id}`;
+    const url = isViewMode ? `/notes/edit/${note.id}` : `/notes/view/${note.id}`;
     router.push(url);
     onOpenChange(false);
   };
