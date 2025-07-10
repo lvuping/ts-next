@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,10 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, X, Wand2 } from 'lucide-react';
-import Link from 'next/link';
+import { X, Wand2 } from 'lucide-react';
 import { NoteInput } from '@/types/note';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
+import { AppLayout } from '@/components/layout/app-layout';
 
 const LANGUAGES = [
   'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 'go', 'rust',
@@ -37,6 +37,8 @@ export default function NewNotePage() {
     tags: [],
     favorite: false,
   });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,20 +143,31 @@ export default function NewNotePage() {
     await handleAssist();
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b p-4 md:p-6">
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Create New Note</h1>
-        </div>
-      </header>
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const response = await fetch('/api/notes/metadata');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories);
+          setTags(data.tags);
+        }
+      } catch (error) {
+        console.error('Failed to fetch metadata:', error);
+      }
+    };
+    
+    fetchMetadata();
+  }, []);
 
-      <main className="container max-w-4xl mx-auto p-4 md:p-6">
+  return (
+    <AppLayout categories={categories} tags={tags}>
+      <div className="min-h-screen bg-background">
+        <header className="border-b p-4 md:p-6">
+          <h1 className="text-2xl font-bold">Create New Note</h1>
+        </header>
+
+        <main className="container max-w-4xl mx-auto p-4 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle>Note Details</CardTitle>
@@ -301,7 +314,8 @@ export default function NewNotePage() {
             </form>
           </CardContent>
         </Card>
-      </main>
+        </main>
+      </div>
 
       <CodeDiffViewer
         originalCode={formData.content || ''}
@@ -313,6 +327,6 @@ export default function NewNotePage() {
         open={showDiffViewer}
         onOpenChange={setShowDiffViewer}
       />
-    </div>
+    </AppLayout>
   );
 }

@@ -4,6 +4,14 @@ import { Highlighter } from 'shiki';
 
 let highlighterPromise: Promise<Highlighter> | null = null;
 
+// Pre-initialize the highlighter to reduce delay on first use
+if (typeof window !== 'undefined') {
+  highlighterPromise = createHighlighter({
+    themes: ['github-dark', 'github-light'],
+    langs: Object.keys(bundledLanguages),
+  });
+}
+
 export async function getHighlighter() {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({

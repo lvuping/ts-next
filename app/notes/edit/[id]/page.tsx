@@ -11,11 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { ArrowLeft, X, Trash2, Wand2, Eye, Code } from 'lucide-react';
+import { X, Trash2, Wand2, Eye, Code } from 'lucide-react';
 import Link from 'next/link';
 import { Note, NoteInput } from '@/types/note';
 import { CodeSnippet } from '@/components/notes/code-snippet';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
+import { AppLayout } from '@/components/layout/app-layout';
 
 const LANGUAGES = [
   'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 'go', 'rust',
@@ -48,6 +49,8 @@ export default function EditNotePage({ params }: Props) {
     tags: [],
     favorite: false,
   });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -73,7 +76,21 @@ export default function EditNotePage({ params }: Props) {
       }
     };
     
+    const fetchMetadata = async () => {
+      try {
+        const response = await fetch('/api/notes/metadata');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories);
+          setTags(data.tags);
+        }
+      } catch (error) {
+        console.error('Failed to fetch metadata:', error);
+      }
+    };
+    
     fetchNote();
+    fetchMetadata();
   }, [id]);
 
 
@@ -217,29 +234,23 @@ export default function EditNotePage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b p-4 md:p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
+    <AppLayout categories={categories} tags={tags}>
+      <div className="min-h-screen bg-background">
+        <header className="border-b p-4 md:p-6">
+          <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Edit Note</h1>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
-        </div>
-      </header>
+        </header>
 
-      <main className="container max-w-6xl mx-auto p-4 md:p-6">
+        <main className="container max-w-6xl mx-auto p-4 md:p-6">
         <Tabs defaultValue="edit" className="space-y-4">
           <TabsList>
             <TabsTrigger value="edit">
@@ -433,7 +444,8 @@ export default function EditNotePage({ params }: Props) {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+        </main>
+      </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
@@ -462,6 +474,6 @@ export default function EditNotePage({ params }: Props) {
         open={showDiffViewer}
         onOpenChange={setShowDiffViewer}
       />
-    </div>
+    </AppLayout>
   );
 }

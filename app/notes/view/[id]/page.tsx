@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Edit, Heart } from 'lucide-react';
 import Link from 'next/link';
 import { CodeSnippet } from '@/components/notes/code-snippet';
+import { ViewWrapper } from './view-wrapper';
 
 export default async function ViewNotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,8 +17,9 @@ export default async function ViewNotePage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Card>
+    <ViewWrapper>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-3">
@@ -57,7 +59,8 @@ export default async function ViewNotePage({ params }: { params: Promise<{ id: s
             language={note.language}
           />
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </ViewWrapper>
   );
 }

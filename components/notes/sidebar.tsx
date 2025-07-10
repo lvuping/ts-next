@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Plus, Heart, FileText, Tag, FolderOpen, Search, Zap } from 'lucide-react';
+import { Menu, Heart, FileText, Tag, FolderOpen, Search, Zap } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 
@@ -57,7 +57,7 @@ export function Sidebar({ categories, tags, className }: SidebarProps) {
         params.delete('search');
       }
       router.push(`/?${params.toString()}`);
-    }, 300);
+    }, 500);
   }, [router, searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -107,15 +107,6 @@ export function Sidebar({ categories, tags, className }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="space-y-6">
-      <div>
-        <Link href="/notes/new">
-          <Button className="w-full" size="lg">
-            <Plus className="h-4 w-4 mr-2" />
-            New Note
-          </Button>
-        </Link>
-      </div>
-
       <form onSubmit={handleSearch} className="space-y-2">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />

@@ -15,10 +15,15 @@ interface CodeSnippetProps {
 export function CodeSnippet({ code, language, className }: CodeSnippetProps) {
   const [html, setHtml] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { theme } = useTheme();
 
   useEffect(() => {
-    highlightCode(code, language, theme as 'dark' | 'light').then(setHtml);
+    setIsLoading(true);
+    highlightCode(code, language, theme as 'dark' | 'light').then((highlighted) => {
+      setHtml(highlighted);
+      setIsLoading(false);
+    });
   }, [code, language, theme]);
 
   const handleCopy = async () => {
@@ -53,15 +58,15 @@ export function CodeSnippet({ code, language, className }: CodeSnippetProps) {
           )}
         </Button>
       </div>
-      {html ? (
+      {isLoading || !html ? (
+        <pre className="p-4 rounded-md bg-muted overflow-x-auto">
+          <code className="text-sm">{code}</code>
+        </pre>
+      ) : (
         <div 
           dangerouslySetInnerHTML={{ __html: html }} 
           className="w-full overflow-x-auto"
         />
-      ) : (
-        <pre className="p-4 rounded-md bg-muted overflow-x-auto">
-          <code className="text-sm">{code}</code>
-        </pre>
       )}
     </div>
   );

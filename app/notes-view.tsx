@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Sidebar } from '@/components/notes/sidebar';
+import { AppLayout } from '@/components/layout/app-layout';
 import { NoteCard } from '@/components/notes/note-card';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -114,14 +114,8 @@ export function NotesView() {
                        (searchParams.get('search') ? `Search: ${searchParams.get('search')}` : null);
 
   return (
-    <div className="min-h-screen flex">
-      <Sidebar 
-        categories={categories} 
-        tags={tags} 
-        className="hidden md:block"
-      />
-      
-      <main className="flex-1">
+    <AppLayout categories={categories} tags={tags}>
+      <div className="flex-1">
         <header className="border-b p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">Notes PKM</h1>
@@ -231,13 +225,13 @@ export function NotesView() {
             </div>
           )}
         </div>
-      </main>
+      </div>
       
       <SearchDialog 
         open={showSearch} 
         onOpenChange={setShowSearch} 
         notes={notes} 
       />
-    </div>
+    </AppLayout>
   );
 }
