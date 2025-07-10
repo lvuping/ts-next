@@ -4,12 +4,20 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Heart, FileText, Tag, FolderOpen, Zap, Plus, ChevronLeft } from 'lucide-react';
+import { Menu, Heart, FileText, Tag, Zap, Plus, ChevronLeft, Settings, Code, Server, Database, Cloud, Shield, Folder } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface Category {
+  id: number;
+  name: string;
+  color: string;
+  icon: string;
+  position: number;
+}
+
 interface SidebarProps {
-  categories: string[];
+  categories: Category[];
   tags: string[];
   className?: string;
   onClose?: () => void;
@@ -20,6 +28,18 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
   const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [isOpen, setIsOpen] = useState(false);
+
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case 'code': return Code;
+      case 'server': return Server;
+      case 'database': return Database;
+      case 'cloud': return Cloud;
+      case 'shield': return Shield;
+      case 'folder':
+      default: return Folder;
+    }
+  };
 
   useEffect(() => {
     const checkMobile = () => {
@@ -33,9 +53,9 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
   }, [isMobile]);
   
 
-  const handleCategoryClick = (category: string) => {
+  const handleCategoryClick = (categoryName: string) => {
     const params = new URLSearchParams(searchParams);
-    params.set('category', category);
+    params.set('category', categoryName);
     params.delete('tag');
     params.delete('favorite');
     router.push(`/?${params.toString()}`);
@@ -119,20 +139,35 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Categories</h3>
-        <div className="space-y-1">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start"
-              onClick={() => handleCategoryClick(category)}
-            >
-              <FolderOpen className="h-3 w-3 mr-2" />
-              {category}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-muted-foreground">Categories</h3>
+          <Link href="/categories">
+            <Button variant="ghost" size="sm" className="h-7 px-2">
+              <Settings className="h-3 w-3" />
             </Button>
-          ))}
+          </Link>
+        </div>
+        <div className="space-y-1">
+          {categories.map((category) => {
+            const Icon = getIconComponent(category.icon);
+            return (
+              <Button
+                key={category.id}
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => handleCategoryClick(category.name)}
+              >
+                <div 
+                  className="h-4 w-4 mr-2 rounded flex items-center justify-center"
+                  style={{ backgroundColor: category.color }}
+                >
+                  <Icon className="h-3 w-3 text-white" />
+                </div>
+                {category.name}
+              </Button>
+            );
+          })}
         </div>
       </div>
 

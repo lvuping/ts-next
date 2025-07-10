@@ -325,8 +325,15 @@ export async function toggleFavorite(id: string): Promise<Note | null> {
   return getNoteById(id);
 }
 
-export async function getCategories(): Promise<string[]> {
-  return ['Frontend', 'Backend', 'Database', 'DevOps', 'Security', 'Other'];
+export async function getCategories(): Promise<Array<{ id: number; name: string; color: string; icon: string; position: number }>> {
+  const db = initDb();
+  const categories = db.prepare(`
+    SELECT id, name, color, icon, position
+    FROM categories
+    ORDER BY position ASC, name ASC
+  `).all() as Array<{ id: number; name: string; color: string; icon: string; position: number }>;
+  
+  return categories;
 }
 
 export async function getTags(): Promise<string[]> {

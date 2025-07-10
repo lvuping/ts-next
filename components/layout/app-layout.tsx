@@ -3,12 +3,13 @@
 import { useState, useEffect, Suspense } from 'react';
 import { Sidebar } from '@/components/notes/sidebar';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  categories?: string[];
+  categories?: Array<{ id: number; name: string; color: string; icon: string; position: number }>;
   tags?: string[];
 }
 
@@ -41,7 +42,7 @@ export function AppLayout({ children, categories = [], tags = [] }: AppLayoutPro
           "fixed h-full overflow-hidden transition-all duration-300 border-r",
           (sidebarOpen || sidebarHovered) && !isMobile ? "w-80" : "w-0"
         )}>
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <Suspense fallback={<LoadingSpinner />}>
             <Sidebar categories={categories} tags={tags} onClose={() => setSidebarOpen(false)} />
           </Suspense>
         </div>

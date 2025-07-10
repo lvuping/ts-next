@@ -10,11 +10,24 @@ export function getDb() {
   db.pragma('foreign_keys = ON');
   
   createTables(db);
+  migrateCategories(db);
   
   return db;
 }
 
 function createTables(db: Database.Database) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE NOT NULL,
+      color TEXT DEFAULT '#6B7280',
+      icon TEXT DEFAULT 'folder',
+      position INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS notes (
       id TEXT PRIMARY KEY,
@@ -22,11 +35,13 @@ function createTables(db: Database.Database) {
       content TEXT NOT NULL,
       language TEXT NOT NULL,
       category TEXT NOT NULL,
+      category_id INTEGER,
       favorite INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       folder_id TEXT,
-      template TEXT
+      template TEXT,
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     )
   `);
   
@@ -61,10 +76,49 @@ function createTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_notes_created_at ON notes(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_notes_updated_at ON notes(updated_at DESC);
     CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category);
+    CREATE INDEX IF NOT EXISTS idx_notes_category_id ON notes(category_id);
     CREATE INDEX IF NOT EXISTS idx_notes_favorite ON notes(favorite);
     CREATE INDEX IF NOT EXISTS idx_note_tags_note_id ON note_tags(note_id);
     CREATE INDEX IF NOT EXISTS idx_note_tags_tag_id ON note_tags(tag_id);
+    CREATE INDEX IF NOT EXISTS idx_categories_position ON categories(position);
   `);
+}
+
+function migrateCategories(db: Database.Database) {
+  const defaultCategories = [
+    { name: 'Frontend', color: '#3B82F6', icon: 'code', position: 0 },
+    { name: 'Backend', color: '#10B981', icon: 'server', position: 1 },
+    { name: 'Database', color: '#F59E0B', icon: 'database', position: 2 },
+    { name: 'DevOps', color: '#8B5CF6', icon: 'cloud', position: 3 },
+    { name: 'Security', color: '#EF4444', icon: 'shield', position: 4 },
+    { name: 'Other', color: '#6B7280', icon: 'folder', position: 5 }
+  ];
+
+  const checkCategory = db.prepare('SELECT id FROM categories WHERE name = ?');
+  const insertCategory = db.prepare(`
+    INSERT OR IGNORE INTO categories (name, color, icon, position, created_at, updated_at) 
+    VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+  `);
+
+  const categoryMap = new Map<string, number>();
+  
+  for (const cat of defaultCategories) {
+    insertCategory.run(cat.name, cat.color, cat.icon, cat.position);
+    const result = checkCategory.get(cat.name) as { id: number } | undefined;
+    if (result) {
+      categoryMap.set(cat.name, result.id);
+    }
+  }
+
+  const notesWithoutCategoryId = db.prepare('SELECT id, category FROM notes WHERE category_id IS NULL').all() as Array<{ id: string, category: string }>;
+  const updateNote = db.prepare('UPDATE notes SET category_id = ? WHERE id = ?');
+  
+  for (const note of notesWithoutCategoryId) {
+    const categoryId = categoryMap.get(note.category);
+    if (categoryId) {
+      updateNote.run(categoryId, note.id);
+    }
+  }
 }
 
 export function migrateFromJson(db: Database.Database) {

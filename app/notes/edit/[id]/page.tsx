@@ -49,7 +49,7 @@ export default function EditNotePage({ params }: Props) {
     tags: [],
     favorite: false,
   });
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
@@ -314,12 +314,11 @@ export default function EditNotePage({ params }: Props) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Frontend">Frontend</SelectItem>
-                          <SelectItem value="Backend">Backend</SelectItem>
-                          <SelectItem value="Database">Database</SelectItem>
-                          <SelectItem value="DevOps">DevOps</SelectItem>
-                          <SelectItem value="Security">Security</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>

@@ -21,7 +21,7 @@ export function NotesView() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [loading, setLoading] = useState(true);
