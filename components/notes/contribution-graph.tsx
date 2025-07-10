@@ -85,25 +85,27 @@ export function ContributionGraph({ notes }: ContributionGraphProps) {
     }
   };
   
-  const months = [
+  const months = useMemo(() => [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
+  ], []);
   
-  const getMonthLabels = () => {
+  const monthLabels = useMemo(() => {
     const labels: { month: string; col: number }[] = [];
     let lastMonth = -1;
     
     contributionData.forEach((week, colIndex) => {
-      const month = new Date(week[0].date).getMonth();
-      if (month !== lastMonth) {
-        labels.push({ month: months[month], col: colIndex });
-        lastMonth = month;
+      if (week.length > 0 && week[0]) {
+        const month = new Date(week[0].date).getMonth();
+        if (month !== lastMonth) {
+          labels.push({ month: months[month], col: colIndex });
+          lastMonth = month;
+        }
       }
     });
     
     return labels;
-  };
+  }, [contributionData, months]);
   
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -135,12 +137,12 @@ export function ContributionGraph({ notes }: ContributionGraphProps) {
               
               <div>
                 <div className="flex gap-1 mb-1 text-xs">
-                  {getMonthLabels().map(({ month, col }) => (
+                  {monthLabels.map(({ month, col }, index) => (
                     <div 
                       key={`${month}-${col}`} 
                       className="h-3"
                       style={{ 
-                        marginLeft: col === 0 ? '0' : `${(col - getMonthLabels()[getMonthLabels().indexOf({ month, col }) - 1]?.col - 1) * 13}px` 
+                        marginLeft: index === 0 ? '0' : `${(col - (monthLabels[index - 1]?.col || 0) - 1) * 13}px` 
                       }}
                     >
                       {month}

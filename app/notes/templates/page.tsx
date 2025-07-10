@@ -9,6 +9,7 @@ import { ArrowLeft, FileCode } from 'lucide-react';
 import Link from 'next/link';
 import { NoteTemplate } from '@/types/note';
 import { CodeSnippet } from '@/components/notes/code-snippet';
+import { AppLayout } from '@/components/layout/app-layout';
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -198,60 +199,65 @@ jobs:
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b p-4 md:p-6">
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Code Templates</h1>
-        </div>
-      </header>
+    <AppLayout>
+      <div className="min-h-screen bg-background">
+        <header className="border-b p-4 md:p-6">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-bold">Code Templates</h1>
+          </div>
+        </header>
 
-      <main className="container max-w-6xl mx-auto p-4 md:p-6">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Loading templates...</p>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {templates.map((template) => (
-              <Card key={template.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <FileCode className="h-5 w-5" />
-                        {template.name}
-                      </CardTitle>
-                      <CardDescription>{template.description}</CardDescription>
+        <main className="container max-w-6xl mx-auto p-4 md:p-6">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-muted-foreground">Loading templates...</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {templates.map((template) => (
+                <Card key={template.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1 flex-1">
+                        <CardTitle className="flex items-center gap-2">
+                          <FileCode className="h-5 w-5" />
+                          {template.name}
+                        </CardTitle>
+                        <CardDescription>{template.description}</CardDescription>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleUseTemplate(template)}
+                        className="ml-2"
+                      >
+                        Use Template
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleUseTemplate(template)}
-                    >
-                      Use Template
-                    </Button>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <Badge>{template.language}</Badge>
-                    <Badge variant="outline">{template.category}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CodeSnippet
-                    code={template.content}
-                    language={template.language}
-                    className="max-h-64"
-                  />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Badge>{template.language}</Badge>
+                      <Badge variant="outline">{template.category}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-hidden">
+                      <CodeSnippet
+                        code={template.content}
+                        language={template.language}
+                        className="max-h-64 overflow-y-auto"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    </AppLayout>
   );
 }

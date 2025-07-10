@@ -22,8 +22,8 @@ export function Spinner({ className, size = "md" }: SpinnerProps) {
 
 export function LoadingSpinner({ className }: { className?: string }) {
   return (
-    <div className={cn("flex items-center justify-center p-6", className)}>
-      <Spinner size="md" />
+    <div className={cn("flex items-center justify-center min-h-screen", className)}>
+      <Spinner size="lg" />
     </div>
   );
 }

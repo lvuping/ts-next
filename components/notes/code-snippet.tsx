@@ -65,7 +65,7 @@ export function CodeSnippet({ code, language, className }: CodeSnippetProps) {
       ) : (
         <div 
           dangerouslySetInnerHTML={{ __html: html }} 
-          className="w-full overflow-x-auto"
+          className="w-full overflow-auto"
         />
       )}
     </div>
