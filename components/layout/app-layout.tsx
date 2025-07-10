@@ -3,8 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { Sidebar } from '@/components/notes/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Menu, X, Plus } from 'lucide-react';
-import Link from 'next/link';
+import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
@@ -43,7 +42,7 @@ export function AppLayout({ children, categories = [], tags = [] }: AppLayoutPro
           (sidebarOpen || sidebarHovered) && !isMobile ? "w-80" : "w-0"
         )}>
           <Suspense fallback={<div className="p-6">Loading...</div>}>
-            <Sidebar categories={categories} tags={tags} />
+            <Sidebar categories={categories} tags={tags} onClose={() => setSidebarOpen(false)} />
           </Suspense>
         </div>
       </div>
@@ -60,33 +59,17 @@ export function AppLayout({ children, categories = [], tags = [] }: AppLayoutPro
       <div className="flex-1 flex flex-col">
         {/* Top Navigation Bar */}
         <header className="border-b h-14 flex items-center px-4 gap-2">
-          {/* Home Button - Always visible in top-left */}
-          <Link href="/">
-            <Button variant="ghost" size="icon" title="Go to Home">
-              <Home className="h-4 w-4" />
-            </Button>
-          </Link>
-
           {/* Sidebar Toggle Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            title={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
-          >
-            {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </Button>
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* New Note Button */}
-          <Link href="/notes/new">
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              New Note
+          {!sidebarOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(true)}
+              title="Show Sidebar"
+            >
+              <Menu className="h-4 w-4" />
             </Button>
-          </Link>
+          )}
         </header>
 
         {/* Page Content */}

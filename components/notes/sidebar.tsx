@@ -2,23 +2,22 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Heart, FileText, Tag, FolderOpen, Search, Zap } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { Menu, Heart, FileText, Tag, FolderOpen, Zap, Plus, ChevronLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface SidebarProps {
   categories: string[];
   tags: string[];
   className?: string;
+  onClose?: () => void;
 }
 
-export function Sidebar({ categories, tags, className }: SidebarProps) {
+export function Sidebar({ categories, tags, className, onClose }: SidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -33,44 +32,6 @@ export function Sidebar({ categories, tags, className }: SidebarProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, [isMobile]);
   
-  useEffect(() => {
-    const searchFromParams = searchParams.get('search') || '';
-    if (searchFromParams !== search) {
-      setSearch(searchFromParams);
-    }
-  }, [searchParams, search]);
-
-  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-    
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      const params = new URLSearchParams(searchParams);
-      if (value) {
-        params.set('search', value);
-      } else {
-        params.delete('search');
-      }
-      router.push(`/?${params.toString()}`);
-    }, 500);
-  }, [router, searchParams]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
-  
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const handleCategoryClick = (category: string) => {
     const params = new URLSearchParams(searchParams);
@@ -101,25 +62,36 @@ export function Sidebar({ categories, tags, className }: SidebarProps) {
 
   const handleClearFilters = () => {
     router.push('/');
-    setSearch('');
     setIsOpen(false);
   };
 
   const SidebarContent = () => (
     <div className="space-y-6">
-      <form onSubmit={handleSearch} className="space-y-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            type="search"
-            placeholder="Search notes..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-9"
-            autoComplete="off"
-          />
-        </div>
-      </form>
+      {/* Header with PKM and hide button */}
+      <div className="group flex items-center justify-between">
+        <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+          <h1 className="text-xl font-bold">PKM</h1>
+        </Link>
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+            title="Hide sidebar"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* New Note Button */}
+      <Link href="/notes/new" className="block">
+        <Button className="w-full">
+          <Plus className="h-4 w-4 mr-2" />
+          New Note
+        </Button>
+      </Link>
 
       <div className="space-y-2">
         <Button
