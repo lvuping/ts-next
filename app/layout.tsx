@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { ViewModeIndicator } from '@/components/notes/view-mode-indicator';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,6 +32,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <ViewModeIndicator />
         </ThemeProvider>
       </body>
     </html>

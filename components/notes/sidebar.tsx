@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Plus, Heart, FileText, Tag, FolderOpen, Search, Zap } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 
 interface SidebarProps {
@@ -18,28 +18,59 @@ interface SidebarProps {
 export function Sidebar({ categories, tags, className }: SidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [isMobile, setIsMobile] = useState(false);
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      if (mobile !== isMobile) {
+        setIsMobile(mobile);
+      }
+    };
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isMobile]);
+  
+  useEffect(() => {
+    const searchFromParams = searchParams.get('search') || '';
+    if (searchFromParams !== search) {
+      setSearch(searchFromParams);
+    }
+  }, [searchParams]);
+
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams);
+      if (value) {
+        params.set('search', value);
+      } else {
+        params.delete('search');
+      }
+      router.push(`/?${params.toString()}`);
+    }, 300);
+  }, [router, searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams(searchParams);
-    if (search) {
-      params.set('search', search);
-    } else {
-      params.delete('search');
-    }
-    router.push(`/?${params.toString()}`);
-    setIsOpen(false);
   };
+  
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCategoryClick = (category: string) => {
     const params = new URLSearchParams(searchParams);
@@ -92,8 +123,9 @@ export function Sidebar({ categories, tags, className }: SidebarProps) {
             type="search"
             placeholder="Search notes..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9"
+            autoComplete="off"
           />
         </div>
       </form>

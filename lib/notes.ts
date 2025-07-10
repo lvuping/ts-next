@@ -1,57 +1,14 @@
 import type { Note, NoteInput, NotesData, NoteTemplate } from '@/types/note';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { getDb, migrateFromJson } from './db';
+import Database from 'better-sqlite3';
 
-const DATA_FILE = path.join(process.cwd(), 'lib/data/notes.json');
-const LOCK_FILE = path.join(process.cwd(), 'lib/data/.notes.lock');
-const LOCK_TIMEOUT = 5000; // 5 seconds
-
-// Simple file-based lock mechanism
-async function acquireLock(): Promise<void> {
-  const startTime = Date.now();
-  while (true) {
-    try {
-      // Try to create lock file exclusively
-      await fs.writeFile(LOCK_FILE, process.pid.toString(), { flag: 'wx' });
-      return;
-    } catch {
-      // Lock file exists, check if it's stale
-      if (Date.now() - startTime > LOCK_TIMEOUT) {
-        // Force remove stale lock
-        try {
-          await fs.unlink(LOCK_FILE);
-        } catch {}
-        throw new Error('Lock acquisition timeout');
-      }
-      // Wait a bit before retrying
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-  }
-}
-
-async function releaseLock(): Promise<void> {
-  try {
-    await fs.unlink(LOCK_FILE);
-  } catch {}
-}
-
-// Initialize data file if it doesn't exist
-async function initializeDataFile() {
-  try {
-    await fs.access(DATA_FILE);
-  } catch {
-    const initialData: NotesData = {
-      notes: [],
-      categories: ['Frontend', 'Backend', 'Database', 'DevOps', 'Security', 'Other'],
-      tags: [],
-      folders: [],
-      templates: [
-        {
-          id: 'react-component',
-          name: 'React Component',
-          description: 'Basic React functional component with TypeScript',
-          language: 'typescript',
-          content: `import React from 'react';
+const templates: NoteTemplate[] = [
+  {
+    id: 'react-component',
+    name: 'React Component',
+    description: 'Basic React functional component with TypeScript',
+    language: 'typescript',
+    content: `import React from 'react';
 
 interface Props {
   // Define your props here
@@ -64,14 +21,14 @@ export default function ComponentName({ }: Props) {
     </div>
   );
 }`,
-          category: 'Frontend'
-        },
-        {
-          id: 'express-route',
-          name: 'Express Route',
-          description: 'Basic Express.js route handler',
-          language: 'javascript',
-          content: `router.get('/path', async (req, res) => {
+    category: 'Frontend'
+  },
+  {
+    id: 'express-route',
+    name: 'Express Route',
+    description: 'Basic Express.js route handler',
+    language: 'javascript',
+    content: `router.get('/path', async (req, res) => {
   try {
     // Your route logic here
     res.json({ success: true });
@@ -80,14 +37,14 @@ export default function ComponentName({ }: Props) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });`,
-          category: 'Backend'
-        },
-        {
-          id: 'sql-query',
-          name: 'SQL Query',
-          description: 'Basic SQL query template',
-          language: 'sql',
-          content: `SELECT 
+    category: 'Backend'
+  },
+  {
+    id: 'sql-query',
+    name: 'SQL Query',
+    description: 'Basic SQL query template',
+    language: 'sql',
+    content: `SELECT 
   column1,
   column2,
   COUNT(*) as count
@@ -96,272 +53,314 @@ WHERE condition = true
 GROUP BY column1, column2
 ORDER BY count DESC
 LIMIT 10;`,
-          category: 'Database'
-        }
-      ]
-    };
-    
-    // Create directory if it doesn't exist
-    await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-    await saveNotesData(initialData);
+    category: 'Database'
   }
+];
+
+let dbInstance: Database.Database | null = null;
+
+function initDb() {
+  if (!dbInstance) {
+    dbInstance = getDb();
+    migrateFromJson(dbInstance);
+  }
+  return dbInstance;
 }
 
-// Read notes data
-async function getNotesData(): Promise<NotesData> {
-  await initializeDataFile();
-  const data = await fs.readFile(DATA_FILE, 'utf-8');
-  return JSON.parse(data);
-}
-
-// Save notes data
-async function saveNotesData(data: NotesData): Promise<void> {
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
-// Get all notes with optional filtering
-export async function getAllNotes(params?: {
+export async function getAllNotes(filters?: {
   search?: string;
   category?: string;
   tag?: string;
   favorite?: boolean;
+  sortBy?: 'createdAt' | 'updatedAt' | 'title';
+  sortOrder?: 'asc' | 'desc';
 }): Promise<Note[]> {
-  const data = await getNotesData();
-  let notes = data.notes;
+  const db = initDb();
   
-  if (params?.search) {
-    const searchLower = params.search.toLowerCase();
-    notes = notes.filter(note => 
-      note.title.toLowerCase().includes(searchLower) ||
-      note.content.toLowerCase().includes(searchLower) ||
-      note.tags.some(tag => tag.toLowerCase().includes(searchLower))
-    );
+  let query = `
+    SELECT DISTINCT
+      n.id,
+      n.title,
+      n.content,
+      n.language,
+      n.category,
+      n.favorite,
+      n.created_at as createdAt,
+      n.updated_at as updatedAt,
+      n.folder_id as folderId,
+      n.template,
+      GROUP_CONCAT(DISTINCT t.name) as tags,
+      GROUP_CONCAT(DISTINCT rn.related_note_id) as relatedNotes
+    FROM notes n
+    LEFT JOIN note_tags nt ON n.id = nt.note_id
+    LEFT JOIN tags t ON nt.tag_id = t.id
+    LEFT JOIN related_notes rn ON n.id = rn.note_id
+  `;
+  
+  const conditions: string[] = [];
+  const params: any[] = [];
+  
+  if (filters?.search) {
+    conditions.push('(n.title LIKE ? OR n.content LIKE ?)');
+    params.push(`%${filters.search}%`, `%${filters.search}%`);
   }
   
-  if (params?.category) {
-    notes = notes.filter(note => note.category === params.category);
+  if (filters?.category) {
+    conditions.push('n.category = ?');
+    params.push(filters.category);
   }
   
-  if (params?.tag) {
-    notes = notes.filter(note => note.tags.includes(params.tag!));
+  if (filters?.tag) {
+    conditions.push('t.name = ?');
+    params.push(filters.tag);
   }
   
-  if (params?.favorite !== undefined) {
-    notes = notes.filter(note => note.favorite === params.favorite);
+  if (filters?.favorite !== undefined) {
+    conditions.push('n.favorite = ?');
+    params.push(filters.favorite ? 1 : 0);
   }
   
-  // Sort by updatedAt descending
-  return notes.sort((a, b) => 
-    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+  
+  query += ' GROUP BY n.id';
+  
+  const sortBy = filters?.sortBy || 'createdAt';
+  const sortOrder = filters?.sortOrder || 'desc';
+  const sortColumn = sortBy === 'createdAt' ? 'n.created_at' : 
+                     sortBy === 'updatedAt' ? 'n.updated_at' : 'n.title';
+  
+  query += ` ORDER BY ${sortColumn} ${sortOrder.toUpperCase()}`;
+  
+  const rows = db.prepare(query).all(...params) as any[];
+  
+  return rows.map(row => ({
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    language: row.language,
+    category: row.category,
+    tags: row.tags ? row.tags.split(',') : [],
+    favorite: row.favorite === 1,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    folderId: row.folderId,
+    template: row.template,
+    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : []
+  }));
 }
 
-// Get single note
 export async function getNoteById(id: string): Promise<Note | null> {
-  const data = await getNotesData();
-  return data.notes.find(note => note.id === id) || null;
+  const db = initDb();
+  
+  const row = db.prepare(`
+    SELECT 
+      n.id,
+      n.title,
+      n.content,
+      n.language,
+      n.category,
+      n.favorite,
+      n.created_at as createdAt,
+      n.updated_at as updatedAt,
+      n.folder_id as folderId,
+      n.template,
+      GROUP_CONCAT(DISTINCT t.name) as tags,
+      GROUP_CONCAT(DISTINCT rn.related_note_id) as relatedNotes
+    FROM notes n
+    LEFT JOIN note_tags nt ON n.id = nt.note_id
+    LEFT JOIN tags t ON nt.tag_id = t.id
+    LEFT JOIN related_notes rn ON n.id = rn.note_id
+    WHERE n.id = ?
+    GROUP BY n.id
+  `).get(id) as any;
+  
+  if (!row) return null;
+  
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    language: row.language,
+    category: row.category,
+    tags: row.tags ? row.tags.split(',') : [],
+    favorite: row.favorite === 1,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    folderId: row.folderId,
+    template: row.template,
+    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : []
+  };
 }
 
-// Create note
 export async function createNote(input: NoteInput): Promise<Note> {
-  await acquireLock();
-  try {
-    const data = await getNotesData();
+  const db = initDb();
+  
+  const id = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+  const now = new Date().toISOString();
+  
+  db.transaction(() => {
+    db.prepare(`
+      INSERT INTO notes (
+        id, title, content, language, category, favorite, 
+        created_at, updated_at, folder_id, template
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      input.title,
+      input.content,
+      input.language,
+      input.category,
+      input.favorite ? 1 : 0,
+      now,
+      now,
+      input.folderId || null,
+      input.template || null
+    );
     
-    const newNote: Note = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
-      ...input,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    for (const tag of input.tags || []) {
+      db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)').run(tag);
+      const tagId = (db.prepare('SELECT id FROM tags WHERE name = ?').get(tag) as any).id;
+      db.prepare('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)').run(id, tagId);
+    }
     
-    data.notes.push(newNote);
-    
-    // Update tags list
-    input.tags.forEach(tag => {
-      if (!data.tags.includes(tag)) {
-        data.tags.push(tag);
-      }
-    });
-    
-    await saveNotesData(data);
-    return newNote;
-  } finally {
-    await releaseLock();
-  }
+    for (const relatedNoteId of input.relatedNotes || []) {
+      db.prepare('INSERT INTO related_notes (note_id, related_note_id) VALUES (?, ?)').run(id, relatedNoteId);
+    }
+  })();
+  
+  return getNoteById(id) as Promise<Note>;
 }
 
-// Update note
-export async function updateNote(id: string, input: NoteInput): Promise<Note | null> {
-  await acquireLock();
-  try {
-    const data = await getNotesData();
-    const index = data.notes.findIndex(note => note.id === id);
+export async function updateNote(id: string, input: Partial<NoteInput>): Promise<Note | null> {
+  const db = initDb();
+  const existing = await getNoteById(id);
+  
+  if (!existing) return null;
+  
+  const now = new Date().toISOString();
+  
+  db.transaction(() => {
+    db.prepare(`
+      UPDATE notes SET
+        title = ?,
+        content = ?,
+        language = ?,
+        category = ?,
+        favorite = ?,
+        updated_at = ?,
+        folder_id = ?,
+        template = ?
+      WHERE id = ?
+    `).run(
+      input.title ?? existing.title,
+      input.content ?? existing.content,
+      input.language ?? existing.language,
+      input.category ?? existing.category,
+      input.favorite !== undefined ? (input.favorite ? 1 : 0) : (existing.favorite ? 1 : 0),
+      now,
+      input.folderId !== undefined ? input.folderId : existing.folderId,
+      input.template !== undefined ? input.template : existing.template,
+      id
+    );
     
-    if (index === -1) return null;
-    
-    const updatedNote: Note = {
-      ...data.notes[index],
-      ...input,
-      updatedAt: new Date().toISOString()
-    };
-    
-    data.notes[index] = updatedNote;
-    
-    // Update tags list
-    input.tags.forEach(tag => {
-      if (!data.tags.includes(tag)) {
-        data.tags.push(tag);
-      }
-    });
-    
-    await saveNotesData(data);
-    return updatedNote;
-  } finally {
-    await releaseLock();
-  }
-}
-
-// Delete note
-export async function deleteNote(id: string): Promise<boolean> {
-  await acquireLock();
-  try {
-    const data = await getNotesData();
-    const index = data.notes.findIndex(note => note.id === id);
-    
-    if (index === -1) return false;
-    
-    data.notes.splice(index, 1);
-    await saveNotesData(data);
-    return true;
-  } finally {
-    await releaseLock();
-  }
-}
-
-// Get all categories
-export async function getAllCategories(): Promise<string[]> {
-  const data = await getNotesData();
-  return data.categories;
-}
-
-// Get all tags
-export async function getAllTags(): Promise<string[]> {
-  const data = await getNotesData();
-  return data.tags.sort();
-}
-
-// Toggle favorite status
-export async function toggleFavorite(id: string): Promise<Note | null> {
-  await acquireLock();
-  try {
-    const data = await getNotesData();
-    const index = data.notes.findIndex(note => note.id === id);
-    
-    if (index === -1) return null;
-    
-    data.notes[index].favorite = !data.notes[index].favorite;
-    data.notes[index].updatedAt = new Date().toISOString();
-    
-    await saveNotesData(data);
-    return data.notes[index];
-  } finally {
-    await releaseLock();
-  }
-}
-
-// Get all templates
-export async function getAllTemplates(): Promise<NoteTemplate[]> {
-  const data = await getNotesData();
-  return data.templates || [];
-}
-
-// Import notes from markdown
-export async function importNotes(markdownContent: string): Promise<{ imported: number; errors: string[] }> {
-  await acquireLock();
-  try {
-    const data = await getNotesData();
-    const errors: string[] = [];
-    let imported = 0;
-    
-    // Parse markdown format
-    const noteBlocks = markdownContent.split(/^## /m).filter(Boolean);
-    
-    for (const block of noteBlocks) {
-      try {
-        const lines = block.trim().split('\n');
-        const title = lines[0].trim();
-        
-        // Extract metadata
-        const metadataMatch = block.match(/\*\*Language:\*\* (.+)\n\*\*Category:\*\* (.+)\n\*\*Tags:\*\* (.+)\n\*\*Created:\*\* (.+)\n\*\*Updated:\*\* (.+)/);
-        
-        if (!metadataMatch) {
-          errors.push(`Failed to parse metadata for note: ${title}`);
-          continue;
-        }
-        
-        const [, language, category, tagsStr, createdAt, updatedAt] = metadataMatch;
-        const tags = tagsStr.split(', ').map(t => t.trim());
-        
-        // Extract content
-        const contentMatch = block.match(/```[\w]*\n([\s\S]*?)```/);
-        const content = contentMatch ? contentMatch[1].trim() : '';
-        
-        const newNote: Note = {
-          id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
-          title,
-          content,
-          language,
-          category,
-          tags,
-          favorite: false,
-          createdAt,
-          updatedAt
-        };
-        
-        data.notes.push(newNote);
-        
-        // Update tags list
-        tags.forEach(tag => {
-          if (!data.tags.includes(tag)) {
-            data.tags.push(tag);
-          }
-        });
-        
-        imported++;
-      } catch (error) {
-        errors.push(`Failed to import note: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (input.tags !== undefined) {
+      db.prepare('DELETE FROM note_tags WHERE note_id = ?').run(id);
+      
+      for (const tag of input.tags) {
+        db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)').run(tag);
+        const tagId = (db.prepare('SELECT id FROM tags WHERE name = ?').get(tag) as any).id;
+        db.prepare('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)').run(id, tagId);
       }
     }
     
-    await saveNotesData(data);
-    return { imported, errors };
-  } finally {
-    await releaseLock();
-  }
+    if (input.relatedNotes !== undefined) {
+      db.prepare('DELETE FROM related_notes WHERE note_id = ?').run(id);
+      
+      for (const relatedNoteId of input.relatedNotes) {
+        db.prepare('INSERT INTO related_notes (note_id, related_note_id) VALUES (?, ?)').run(id, relatedNoteId);
+      }
+    }
+  })();
+  
+  return getNoteById(id);
 }
 
-// Export notes to markdown
-export async function exportNotesToMarkdown(noteIds?: string[]): Promise<string> {
-  const data = await getNotesData();
-  const notes = noteIds 
-    ? data.notes.filter(note => noteIds.includes(note.id))
-    : data.notes;
+export async function deleteNote(id: string): Promise<boolean> {
+  const db = initDb();
+  const result = db.prepare('DELETE FROM notes WHERE id = ?').run(id);
   
+  return result.changes > 0;
+}
+
+export async function toggleFavorite(id: string): Promise<Note | null> {
+  const db = initDb();
+  const existing = await getNoteById(id);
+  
+  if (!existing) return null;
+  
+  db.prepare('UPDATE notes SET favorite = ?, updated_at = ? WHERE id = ?')
+    .run(existing.favorite ? 0 : 1, new Date().toISOString(), id);
+  
+  return getNoteById(id);
+}
+
+export async function getCategories(): Promise<string[]> {
+  return ['Frontend', 'Backend', 'Database', 'DevOps', 'Security', 'Other'];
+}
+
+export async function getTags(): Promise<string[]> {
+  const db = initDb();
+  const rows = db.prepare('SELECT DISTINCT name FROM tags ORDER BY name').all() as any[];
+  return rows.map(row => row.name);
+}
+
+export async function getTemplates(): Promise<NoteTemplate[]> {
+  return templates;
+}
+
+export function importNotes(markdown: string): NoteInput[] {
+  const notes: NoteInput[] = [];
+  const sections = markdown.split(/^## /m).filter(Boolean);
+  
+  for (const section of sections) {
+    const lines = section.trim().split('\n');
+    const title = lines[0].trim();
+    
+    const metaMatch = section.match(/\*\*Language:\*\* (\w+)\s*\n\*\*Category:\*\* (\w+)\s*\n\*\*Tags:\*\* ([^\n]+)/);
+    const language = metaMatch?.[1] || 'plaintext';
+    const category = metaMatch?.[2] || 'Other';
+    const tags = metaMatch?.[3]?.split(',').map(t => t.trim()) || [];
+    
+    const codeMatch = section.match(/```[\w]*\n([\s\S]+?)```/);
+    const content = codeMatch?.[1] || '';
+    
+    notes.push({
+      title,
+      content,
+      language,
+      category,
+      tags,
+      favorite: false
+    });
+  }
+  
+  return notes;
+}
+
+export function exportNotesToMarkdown(notes: Note[]): string {
   return notes.map(note => {
+    const tags = note.tags.join(', ');
     return `## ${note.title}
 
 **Language:** ${note.language}
 **Category:** ${note.category}
-**Tags:** ${note.tags.join(', ')}
-**Created:** ${note.createdAt}
-**Updated:** ${note.updatedAt}
+**Tags:** ${tags}
 
 \`\`\`${note.language}
 ${note.content}
 \`\`\`
-
----
 `;
-  }).join('\n');
+  }).join('\n---\n\n');
 }

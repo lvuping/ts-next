@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-import { getAllCategories, getAllTags } from '@/lib/notes';
+import { getCategories, getTags } from '@/lib/notes';
 
 export async function GET() {
   try {
@@ -9,8 +9,8 @@ export async function GET() {
     }
 
     const [categories, tags] = await Promise.all([
-      getAllCategories(),
-      getAllTags()
+      getCategories(),
+      getTags()
     ]);
     
     return NextResponse.json({ categories, tags });

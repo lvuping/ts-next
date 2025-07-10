@@ -10,6 +10,7 @@ import { Note } from '@/types/note';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CodeSnippet } from './code-snippet';
+import { useViewMode } from '@/hooks/use-view-mode';
 
 interface NoteCardProps {
   note: Note;
@@ -21,6 +22,9 @@ interface NoteCardProps {
 export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }: NoteCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const { isViewMode } = useViewMode();
+  
+  const noteUrl = isViewMode ? `/notes/view/${note.id}` : `/notes/edit/${note.id}`;
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this note?')) return;
@@ -80,7 +84,7 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
     return (
       <tr className="hover:bg-muted/50 transition-colors">
         <td className="p-4">
-          <Link href={`/notes/edit/${note.id}`} className="font-medium hover:underline">
+          <Link href={noteUrl} className="font-medium hover:underline">
             {note.title}
           </Link>
         </td>
@@ -149,7 +153,7 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle>
-              <Link href={`/notes/edit/${note.id}`} className="hover:underline">
+              <Link href={noteUrl} className="hover:underline">
                 {note.title}
               </Link>
             </CardTitle>
