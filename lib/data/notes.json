@@ -1,0 +1,513 @@
+{
+  "notes": [
+    {
+      "id": "1752145816917stf53dih3",
+      "title": "Test",
+      "content": "aa",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:10:16.917Z",
+      "updatedAt": "2025-07-10T11:10:16.917Z"
+    },
+    {
+      "id": "1752146006939g2m06myp0",
+      "title": "New React Component",
+      "content": "import React from 'react';\n\ninterface Props {\n  // Define your props here\n}\n\nexport default function ComponentName({ }: Props) {\n  return (\n    <div>\n      {/* Your component content */}\n    </div>\n  );\n}",
+      "language": "typescript",
+      "category": "Frontend",
+      "tags": [
+        "template",
+        "react-component"
+      ],
+      "favorite": false,
+      "template": "react-component",
+      "createdAt": "2025-07-10T11:13:26.939Z",
+      "updatedAt": "2025-07-10T11:36:34.628Z"
+    },
+    {
+      "id": "1752146021790f1sugkqk7",
+      "title": "New GitHub Action",
+      "content": "name: CI\n\non:\n  push:\n    branches: [ main ]\n  pull_request:\n    branches: [ main ]\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    \n    steps:\n    - uses: actions/checkout@v3\n    \n    - name: Setup Node.js\n      uses: actions/setup-node@v3\n      with:\n        node-version: '18'\n        \n    - name: Install dependencies\n      run: npm ci\n      \n    - name: Run tests\n      run: npm test\n      \n    - name: Build\n      run: npm run build",
+      "language": "yaml",
+      "category": "DevOps",
+      "tags": [
+        "template",
+        "github-action"
+      ],
+      "favorite": false,
+      "template": "github-action",
+      "createdAt": "2025-07-10T11:13:41.790Z",
+      "updatedAt": "2025-07-10T11:13:41.790Z"
+    },
+    {
+      "id": "17521481936687bg2q5agr",
+      "title": "Note to Get",
+      "content": "const test = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:49:53.668Z",
+      "updatedAt": "2025-07-10T11:49:53.668Z"
+    },
+    {
+      "id": "1752148193838dolrvkrum",
+      "title": "API Test Note",
+      "content": "console.log(\"API test\");",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [
+        "api",
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:49:53.838Z",
+      "updatedAt": "2025-07-10T11:49:53.838Z"
+    },
+    {
+      "id": "1752148194242j77bi4hn0",
+      "title": "Updated Note",
+      "content": "const updated = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:49:54.242Z",
+      "updatedAt": "2025-07-10T11:49:54.333Z"
+    },
+    {
+      "id": "1752148194259f8yyju8mv",
+      "title": "Note to Favorite",
+      "content": "const favorite = false;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": true,
+      "createdAt": "2025-07-10T11:49:54.259Z",
+      "updatedAt": "2025-07-10T11:49:54.886Z"
+    },
+    {
+      "id": "175214820129785z6uarx2",
+      "title": "Note to Edit",
+      "content": "const edited = true;",
+      "language": "javascript",
+      "category": "Other",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:01.297Z",
+      "updatedAt": "2025-07-10T11:50:02.421Z"
+    },
+    {
+      "id": "1752148201872a71pg1yz4",
+      "title": "Test Note",
+      "content": "console.log(\"Hello, World!\");",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:01.872Z",
+      "updatedAt": "2025-07-10T11:50:01.872Z"
+    },
+    {
+      "id": "17521482033396aqnc27s9",
+      "title": "API Test Note",
+      "content": "console.log(\"API test\");",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [
+        "api",
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:03.339Z",
+      "updatedAt": "2025-07-10T11:50:03.339Z"
+    },
+    {
+      "id": "1752148203399ck3ss4qdq",
+      "title": "Note to Favorite",
+      "content": "const favorite = false;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": true,
+      "createdAt": "2025-07-10T11:50:03.399Z",
+      "updatedAt": "2025-07-10T11:50:03.413Z"
+    },
+    {
+      "id": "1752148203496tv7x6fadz",
+      "title": "Note to Get",
+      "content": "const test = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:03.496Z",
+      "updatedAt": "2025-07-10T11:50:03.496Z"
+    },
+    {
+      "id": "1752148203519dvjakmks6",
+      "title": "Updated Note",
+      "content": "const updated = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:03.519Z",
+      "updatedAt": "2025-07-10T11:50:03.530Z"
+    },
+    {
+      "id": "17521482136962pt0htnnp",
+      "title": "Test Note",
+      "content": "console.log(\"Hello, World!\");",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:13.696Z",
+      "updatedAt": "2025-07-10T11:50:13.696Z"
+    },
+    {
+      "id": "175214821457740oirpy7s",
+      "title": "Edited Note",
+      "content": "const edited = true;",
+      "language": "javascript",
+      "category": "Other",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:14.577Z",
+      "updatedAt": "2025-07-10T11:50:14.896Z"
+    },
+    {
+      "id": "1752148222666onea07xyg",
+      "title": "API Test Note",
+      "content": "console.log(\"API test\");",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [
+        "api",
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:22.666Z",
+      "updatedAt": "2025-07-10T11:50:22.666Z"
+    },
+    {
+      "id": "1752148222690x00ehf8i3",
+      "title": "Note to Get",
+      "content": "const test = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:22.690Z",
+      "updatedAt": "2025-07-10T11:50:22.690Z"
+    },
+    {
+      "id": "1752148222710oce6fjmgp",
+      "title": "Updated Note",
+      "content": "const updated = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:22.710Z",
+      "updatedAt": "2025-07-10T11:50:22.718Z"
+    },
+    {
+      "id": "17521482227600ggf1f2nd",
+      "title": "Note to Favorite",
+      "content": "const favorite = false;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": true,
+      "createdAt": "2025-07-10T11:50:22.760Z",
+      "updatedAt": "2025-07-10T11:50:22.770Z"
+    },
+    {
+      "id": "1752148234529wp671divo",
+      "title": "Test Note",
+      "content": "console.log(\"Hello, World!\");",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:34.529Z",
+      "updatedAt": "2025-07-10T11:50:34.529Z"
+    },
+    {
+      "id": "17521482353158v9k1n7dr",
+      "title": "Edited Note",
+      "content": "const edited = true;",
+      "language": "javascript",
+      "category": "Other",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T11:50:35.315Z",
+      "updatedAt": "2025-07-10T11:50:35.590Z"
+    },
+    {
+      "id": "1752149106806wdesyr1sz",
+      "title": "Note to Get",
+      "content": "const test = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:06.806Z",
+      "updatedAt": "2025-07-10T12:05:06.806Z"
+    },
+    {
+      "id": "1752149107118bf5akcjq1",
+      "title": "API Test Note",
+      "content": "console.log(\"API test\");",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [
+        "api",
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:07.118Z",
+      "updatedAt": "2025-07-10T12:05:07.118Z"
+    },
+    {
+      "id": "1752149107471jqrhkj4o1",
+      "title": "Updated Note",
+      "content": "const updated = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:07.471Z",
+      "updatedAt": "2025-07-10T12:05:07.488Z"
+    },
+    {
+      "id": "175214910754961f6ekmfq",
+      "title": "Note to Favorite",
+      "content": "const favorite = false;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": true,
+      "createdAt": "2025-07-10T12:05:07.549Z",
+      "updatedAt": "2025-07-10T12:05:09.272Z"
+    },
+    {
+      "id": "1752149112474q8bb6ja1j",
+      "title": "Edited Note",
+      "content": "const edited = true;",
+      "language": "javascript",
+      "category": "Other",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:12.474Z",
+      "updatedAt": "2025-07-10T12:05:13.753Z"
+    },
+    {
+      "id": "1752149113064qlmg15xys",
+      "title": "Test Note",
+      "content": "console.log(\"Hello, World!\");",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:13.064Z",
+      "updatedAt": "2025-07-10T12:05:13.064Z"
+    },
+    {
+      "id": "1752149115207wl30jlsdr",
+      "title": "API Test Note",
+      "content": "console.log(\"API test\");",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [
+        "api",
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:15.207Z",
+      "updatedAt": "2025-07-10T12:05:15.207Z"
+    },
+    {
+      "id": "1752149115231ykolg52z8",
+      "title": "Note to Get",
+      "content": "const test = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:15.231Z",
+      "updatedAt": "2025-07-10T12:05:15.231Z"
+    },
+    {
+      "id": "17521491152528oor6qtt8",
+      "title": "Updated Note",
+      "content": "const updated = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:15.252Z",
+      "updatedAt": "2025-07-10T12:05:15.260Z"
+    },
+    {
+      "id": "1752149115303dc3kjoi8f",
+      "title": "Note to Favorite",
+      "content": "const favorite = false;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": true,
+      "createdAt": "2025-07-10T12:05:15.303Z",
+      "updatedAt": "2025-07-10T12:05:15.313Z"
+    },
+    {
+      "id": "1752149125149qhlbkdtbl",
+      "title": "Test Note",
+      "content": "console.log(\"Hello, World!\");",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:25.149Z",
+      "updatedAt": "2025-07-10T12:05:25.149Z"
+    },
+    {
+      "id": "1752149126082aw730tb83",
+      "title": "Edited Note",
+      "content": "const edited = true;",
+      "language": "javascript",
+      "category": "Other",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:26.082Z",
+      "updatedAt": "2025-07-10T12:05:26.381Z"
+    },
+    {
+      "id": "1752149134141sfztvx9lf",
+      "title": "API Test Note",
+      "content": "console.log(\"API test\");",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [
+        "api",
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:34.141Z",
+      "updatedAt": "2025-07-10T12:05:34.141Z"
+    },
+    {
+      "id": "17521491341667lm7d6gx4",
+      "title": "Note to Get",
+      "content": "const test = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:34.166Z",
+      "updatedAt": "2025-07-10T12:05:34.166Z"
+    },
+    {
+      "id": "1752149134188pxk3ntz7r",
+      "title": "Updated Note",
+      "content": "const updated = true;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:34.188Z",
+      "updatedAt": "2025-07-10T12:05:34.195Z"
+    },
+    {
+      "id": "1752149134240jwfmp3ej8",
+      "title": "Note to Favorite",
+      "content": "const favorite = false;",
+      "language": "javascript",
+      "category": "Backend",
+      "tags": [],
+      "favorite": true,
+      "createdAt": "2025-07-10T12:05:34.240Z",
+      "updatedAt": "2025-07-10T12:05:34.249Z"
+    },
+    {
+      "id": "17521491462988mqbddi46",
+      "title": "Test Note",
+      "content": "console.log(\"Hello, World!\");",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [
+        "test"
+      ],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:46.298Z",
+      "updatedAt": "2025-07-10T12:05:46.298Z"
+    },
+    {
+      "id": "17521491471236sc7uwetm",
+      "title": "Edited Note",
+      "content": "const edited = true;",
+      "language": "javascript",
+      "category": "Other",
+      "tags": [],
+      "favorite": false,
+      "createdAt": "2025-07-10T12:05:47.123Z",
+      "updatedAt": "2025-07-10T12:05:47.404Z"
+    }
+  ],
+  "categories": [
+    "Frontend",
+    "Backend",
+    "Database",
+    "DevOps",
+    "Security",
+    "Other"
+  ],
+  "tags": [
+    "template",
+    "react-component",
+    "github-action",
+    "api",
+    "test"
+  ],
+  "folders": [],
+  "templates": [
+    {
+      "id": "react-component",
+      "name": "React Component",
+      "description": "Basic React functional component with TypeScript",
+      "language": "typescript",
+      "content": "import React from 'react';\n\ninterface Props {\n  // Define your props here\n}\n\nexport default function ComponentName({ }: Props) {\n  return (\n    <div>\n      {/* Your component content */}\n    </div>\n  );\n}",
+      "category": "Frontend"
+    },
+    {
+      "id": "express-route",
+      "name": "Express Route",
+      "description": "Basic Express.js route handler",
+      "language": "javascript",
+      "content": "router.get('/path', async (req, res) => {\n  try {\n    // Your route logic here\n    res.json({ success: true });\n  } catch (error) {\n    console.error(error);\n    res.status(500).json({ error: 'Internal server error' });\n  }\n});",
+      "category": "Backend"
+    },
+    {
+      "id": "sql-query",
+      "name": "SQL Query",
+      "description": "Basic SQL query template",
+      "language": "sql",
+      "content": "SELECT \n  column1,\n  column2,\n  COUNT(*) as count\nFROM table_name\nWHERE condition = true\nGROUP BY column1, column2\nORDER BY count DESC\nLIMIT 10;",
+      "category": "Database"
+    }
+  ]
+}

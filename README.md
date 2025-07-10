@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Notes PKM - Personal Knowledge Management
 
-## Getting Started
+A modern, feature-rich note-taking application built with Next.js 15, designed specifically for developers to manage code snippets and technical knowledge.
 
-First, run the development server:
+## 🚀 Features
 
+### Core Functionality
+- **Code Snippet Management**: Store, organize, and search through your code snippets
+- **Syntax Highlighting**: Beautiful code highlighting powered by Shiki
+- **Multi-Language Support**: Support for 20+ programming languages
+- **Categories & Tags**: Organize notes with categories and custom tags
+- **Favorites**: Mark important notes as favorites for quick access
+- **Templates**: Pre-defined templates for common code patterns
+
+### Enhanced Features
+- **🔍 Advanced Search**: Real-time fuzzy search with keyboard shortcuts (Ctrl+K or /)
+- **📊 Statistics Dashboard**: Visual insights about your notes collection
+- **🌓 Dark/Light Mode**: Theme support with system preference detection
+- **📱 Responsive Design**: Works seamlessly on desktop and mobile devices
+- **⌨️ Keyboard Shortcuts**: 
+  - `Ctrl+K` or `/`: Open search
+  - `Ctrl+N`: Create new note
+  - `Ctrl+Shift+S`: Toggle statistics
+- **🤖 AI Assistant**: Powered by Google Gemini for code suggestions and modifications
+- **📝 Markdown Support**: Preview notes with markdown formatting
+- **🔐 Password Protection**: Simple authentication system
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Language**: TypeScript
+- **Data Storage**: File-based JSON storage with lock mechanism
+- **Syntax Highlighting**: Shiki
+- **Search**: Fuse.js for fuzzy search
+- **Theme**: next-themes for dark mode support
+- **Testing**: Playwright for E2E tests
+
+## 📦 Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd notes-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+pnpm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit `.env.local` and set:
+- `APP_PASSWORD`: Your authentication password (default: changeme123)
+- `GEMINI_API_KEY`: (Optional) Google Gemini API key for AI features
 
-## Learn More
+4. Run the development server:
+```bash
+pnpm dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🧪 Testing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run integration tests:
+```bash
+pnpm test
+```
 
-## Deploy on Vercel
+Run tests with UI:
+```bash
+pnpm test:ui
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📝 Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Creating Notes
+1. Click "New Note" or press `Ctrl+N`
+2. Fill in the title, select language and category
+3. Paste or write your code
+4. Add relevant tags
+5. Click "Create Note"
+
+### Searching Notes
+1. Press `Ctrl+K` or `/` to open search
+2. Type to search by title, content, tags, or category
+3. Use arrow keys to navigate results
+4. Press Enter to open selected note
+
+### AI Assistant
+When editing a note:
+1. Type your modification request in the AI assistant field
+2. Click "Assist" or press Enter
+3. The AI will modify your code based on the request
+
+### View Modes
+- **Detailed View**: Shows code preview in cards
+- **Card View**: Compact cards without code preview
+- **Compact View**: Table format for maximum density
+
+## 📄 API Routes
+
+- `POST /api/auth`: Login
+- `DELETE /api/auth`: Logout
+- `GET /api/notes`: Get all notes (with filters)
+- `POST /api/notes`: Create note
+- `GET /api/notes/[id]`: Get single note
+- `PUT /api/notes/[id]`: Update note
+- `DELETE /api/notes/[id]`: Delete note
+- `POST /api/notes/[id]/favorite`: Toggle favorite
+- `GET /api/notes/metadata`: Get categories and tags
+- `POST /api/llm/assist`: AI code assistance
+
+## 🔒 Security
+
+- Password-based authentication with HTTP-only cookies
+- Session duration: 7 days
+- Secure cookies in production
+- File-based lock mechanism prevents data corruption
+
+## 🎨 Customization
+
+### Adding Languages
+Edit the `LANGUAGES` array in:
+- `/app/notes/new/page.tsx`
+- `/app/notes/edit/[id]/page.tsx`
+
+### Adding Categories
+Categories are stored in the data file and can be modified through the API.
+
+### Themes
+The app uses CSS variables for theming. Modify `/app/globals.css` to customize colors.
+
+## 📈 Future Improvements
+
+- [ ] Database integration (PostgreSQL/SQLite)
+- [ ] User accounts with multi-user support
+- [ ] Note sharing and collaboration
+- [ ] Export to various formats (PDF, Markdown, etc.)
+- [ ] Version history for notes
+- [ ] Code execution sandbox
+- [ ] Browser extension for quick capture
+- [ ] Mobile app
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📜 License
+
+This project is open source and available under the MIT License.

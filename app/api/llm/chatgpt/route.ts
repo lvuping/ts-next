@@ -16,11 +16,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt, context, language } = await request.json();
+    const { model, messages } = await request.json();
 
-    if (!prompt) {
+    if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
-        { error: 'Prompt is required' },
+        { error: 'Messages array is required' },
         { status: 400 }
       );
     }
@@ -29,38 +29,14 @@ export async function POST(request: NextRequest) {
       apiKey: env.OPENAI_API_KEY,
     });
 
-    const systemPrompt = `You are a code assistant helping with ${language || 'code'} development. 
-    Provide clean, well-structured code that follows best practices and common patterns.
-    ${context ? 'Modify the existing code based on the request.' : 'Generate new code based on the request.'}
-    Only return the code without explanations unless specifically asked.`;
-
-    const userPrompt = context 
-      ? `Existing code:\n\`\`\`${language}\n${context}\n\`\`\`\n\nRequest: ${prompt}`
-      : prompt;
-
     const completion = await client.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt
-        },
-        {
-          role: 'user',
-          content: userPrompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 4096,
+      model: model || 'gpt-4.1',
+      messages: messages
     });
 
-    const generatedText = completion.choices[0]?.message?.content || '';
+    const content = completion.choices[0]?.message?.content || '';
 
-    // Extract code from the response if it's wrapped in code blocks
-    const codeMatch = generatedText.match(/```[\w]*\n([\s\S]*?)```/);
-    const code = codeMatch ? codeMatch[1].trim() : generatedText.trim();
-
-    return NextResponse.json({ code });
+    return NextResponse.json({ content });
   } catch (error) {
     console.error('ChatGPT assist error:', error);
     return NextResponse.json(

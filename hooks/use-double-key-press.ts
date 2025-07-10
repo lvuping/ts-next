@@ -21,13 +21,13 @@ export function useDoubleKeyPress({ key, timeout = 300, handler }: DoubleKeyPres
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check if the pressed key matches (case-insensitive)
-      if (event.key.toLowerCase() !== key.toLowerCase()) {
-        return;
-      }
-
-      // For Control key detection
-      if (key.toLowerCase() === 'control' && !event.ctrlKey) {
+      // For Control key detection, check the key property
+      if (key.toLowerCase() === 'control') {
+        if (event.key !== 'Control' && !event.ctrlKey) {
+          return;
+        }
+      } else if (event.key.toLowerCase() !== key.toLowerCase()) {
+        // For other keys, check if the pressed key matches (case-insensitive)
         return;
       }
 
@@ -62,10 +62,23 @@ export function useDoubleKeyPress({ key, timeout = 300, handler }: DoubleKeyPres
       }, timeout);
     };
 
+    // For Control key, also prevent default behavior on keyup
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (key.toLowerCase() === 'control' && event.key === 'Control') {
+        event.preventDefault();
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
+    if (key.toLowerCase() === 'control') {
+      window.addEventListener('keyup', handleKeyUp);
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      if (key.toLowerCase() === 'control') {
+        window.removeEventListener('keyup', handleKeyUp);
+      }
       if (timeoutId.current) {
         clearTimeout(timeoutId.current);
       }
