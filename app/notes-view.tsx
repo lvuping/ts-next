@@ -115,10 +115,10 @@ export function NotesView() {
 
   return (
     <AppLayout categories={categories} tags={tags}>
-      <div className="flex-1">
-        <header className="border-b p-4 md:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold">Notes PKM</h1>
+      <div className="h-full flex flex-col">
+        <header className="border-b px-4 py-2 md:px-6 md:py-3 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold">Notes PKM</h1>
             <div className="flex items-center gap-2">
               <Button 
                 variant="ghost" 
@@ -138,15 +138,13 @@ export function NotesView() {
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div>
-              {activeFilter && (
-                <p className="text-sm text-muted-foreground">
-                  Filtered by: <span className="font-medium">{activeFilter}</span>
-                </p>
-              )}
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-4">
               <p className="text-sm text-muted-foreground">
                 {notes.length} {notes.length === 1 ? 'note' : 'notes'} found
+                {activeFilter && (
+                  <span> • Filtered by: <span className="font-medium">{activeFilter}</span></span>
+                )}
               </p>
             </div>
             
@@ -168,7 +166,7 @@ export function NotesView() {
           </div>
         </header>
         
-        <div className="p-4 md:p-6">
+        <div className="flex-1 overflow-auto p-4 md:p-6">
           {showStats && (
             <div className="mb-6 animate-fade-in">
               <StatsCard notes={notes} categories={categories} tags={tags} />

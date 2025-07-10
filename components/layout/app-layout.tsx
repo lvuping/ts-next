@@ -56,24 +56,22 @@ export function AppLayout({ children, categories = [], tags = [] }: AppLayoutPro
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Navigation Bar */}
-        <header className="border-b h-14 flex items-center px-4 gap-2">
-          {/* Sidebar Toggle Button */}
-          {!sidebarOpen && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(true)}
-              title="Show Sidebar"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-          )}
-        </header>
+      <div className="flex-1 relative">
+        {/* Floating Sidebar Toggle Button */}
+        {!sidebarOpen && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(true)}
+            title="Show Sidebar"
+            className="fixed top-4 left-4 z-50"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        )}
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="h-full overflow-auto">
           {children}
         </main>
       </div>
