@@ -19,9 +19,28 @@ export async function POST(request: NextRequest) {
     }
 
     const content = await file.text();
-    const result = await importNotes(content);
+    const notesToImport = importNotes(content);
     
-    return NextResponse.json(result);
+    // Import each note
+    let importedCount = 0;
+    const errors: string[] = [];
+    
+    for (const noteData of notesToImport) {
+      try {
+        const { createNote } = await import('@/lib/notes');
+        await createNote(noteData);
+        importedCount++;
+      } catch (error) {
+        console.error('Error importing note:', noteData.title, error);
+        errors.push(`Failed to import: ${noteData.title}`);
+      }
+    }
+    
+    return NextResponse.json({ 
+      count: importedCount,
+      total: notesToImport.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
   } catch (error) {
     console.error('Error importing notes:', error);
     return NextResponse.json(

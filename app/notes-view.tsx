@@ -9,11 +9,13 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SearchDialog } from '@/components/notes/search-dialog';
 import { StatsCard } from '@/components/notes/stats-card';
-import { LayoutGrid, List, TableIcon, LogOut, Search, BarChart3 } from 'lucide-react';
+import { LayoutGrid, List, TableIcon, LogOut, Search, BarChart3, Download, Upload } from 'lucide-react';
 import { Note } from '@/types/note';
 import { useRouter } from 'next/navigation';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useDoubleKeyPress } from '@/hooks/use-double-key-press';
+import { ExportDialog } from '@/components/notes/export-dialog';
+import { ImportDialog } from '@/components/notes/import-dialog';
 
 type ViewMode = 'detailed' | 'card' | 'compact';
 
@@ -27,6 +29,8 @@ export function NotesView() {
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   // Use double Control key press for search
   useDoubleKeyPress({
@@ -131,6 +135,22 @@ export function NotesView() {
               <Button variant="ghost" size="icon" onClick={() => setShowStats(!showStats)}>
                 <BarChart3 className="h-4 w-4" />
               </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowExport(true)}
+                title="Export notes"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowImport(true)}
+                title="Import notes"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
               <ThemeToggle />
               <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
@@ -229,6 +249,17 @@ export function NotesView() {
         open={showSearch} 
         onOpenChange={setShowSearch} 
         notes={notes} 
+      />
+      
+      <ExportDialog
+        open={showExport}
+        onOpenChange={setShowExport}
+        notes={notes}
+      />
+      
+      <ImportDialog
+        open={showImport}
+        onOpenChange={setShowImport}
       />
     </AppLayout>
   );
