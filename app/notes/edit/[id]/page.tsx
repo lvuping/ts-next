@@ -260,9 +260,9 @@ export default function EditNotePage({ params }: Props) {
   return (
     <AppLayout categories={categories} tags={tags}>
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="border-b px-6 py-4 flex-shrink-0">
+        <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Edit Note</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Edit Note</h1>
             <Button
               variant="ghost"
               size="sm"
@@ -274,8 +274,8 @@ export default function EditNotePage({ params }: Props) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto h-full flex flex-col">
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="max-w-7xl mx-auto h-full flex flex-col">
           <Tabs defaultValue="edit" className="flex flex-col h-full">
             <div className="px-8 pt-4 pb-3">
               <TabsList className="bg-muted/50 p-1">
@@ -299,7 +299,7 @@ export default function EditNotePage({ params }: Props) {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="Untitled Note"
-                    className="text-2xl font-semibold bg-transparent border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                    className="text-3xl font-bold bg-transparent border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/40 tracking-tight"
                     required
                   />
                 </div>
@@ -348,7 +348,7 @@ export default function EditNotePage({ params }: Props) {
                   </div>
 
                   {/* AI Assist Bar */}
-                  <div className="bg-accent/20 rounded-lg p-3 border border-accent/30">
+                  <div className="bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl p-4 border border-accent/30 shadow-sm hover:shadow-md transition-shadow duration-300">
                     <div className="flex gap-2 items-center">
                       <div className="flex-1 relative">
                         <Wand2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -382,21 +382,29 @@ export default function EditNotePage({ params }: Props) {
                 </div>
 
                 {/* Content Editor */}
-                <div className="flex-1 px-8 pb-6">
-                  <div className="h-full rounded-lg border bg-background/50">
-                    <Textarea
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="Start writing your code or notes..."
-                      className="h-full font-mono text-sm resize-none border-0 bg-transparent p-4 focus-visible:ring-0"
-                      required
-                    />
+                <div className="flex-1 px-8 pb-6 min-h-[500px]">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-1">
+                      <span className="text-sm font-medium text-muted-foreground">Content</span>
+                      <div className="flex-1 h-px bg-border/50"></div>
+                    </div>
+                    <div className="h-full bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
+                      <div className="h-full p-1">
+                      <Textarea
+                        id="content"
+                        value={formData.content}
+                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                        placeholder="Start writing your code or notes..."
+                        className="h-full w-full font-mono text-base leading-relaxed resize-none border-0 bg-transparent p-6 focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/40 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+                        required
+                      />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Tags and Actions Section */}
-                <div className="px-8 pb-6 space-y-4 border-t bg-background/50">
+                <div className="px-8 pb-6 space-y-4 border-t-2 border-border/30 bg-gradient-to-b from-background/50 to-background/30">
                   {/* Tags */}
                   <div className="pt-4">
                     <div className="flex items-center gap-2 mb-2">
