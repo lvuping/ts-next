@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { X, Wand2 } from 'lucide-react';
+import { X, Wand2, Tags, Loader2 } from 'lucide-react';
 import { NoteInput } from '@/types/note';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -48,6 +48,8 @@ export default function NewNotePage() {
   });
   const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
 
   const detectLanguageAndCategory = () => {
     const combinedText = `${formData.title} ${formData.content}`.toLowerCase();
@@ -258,31 +260,73 @@ export default function NewNotePage() {
     fetchMetadata();
   }, []);
 
+  const generateTagSuggestions = async () => {
+    if (!formData.title && !formData.content) {
+      return;
+    }
+
+    setIsGeneratingTags(true);
+    try {
+      const response = await fetch('/api/llm/suggest-tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content,
+          language: formData.language,
+          category: formData.category,
+          existingTags: tags,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestedTags(data.tags.filter((tag: string) => !formData.tags?.includes(tag)));
+      }
+    } catch (error) {
+      console.error('Failed to generate tag suggestions:', error);
+    } finally {
+      setIsGeneratingTags(false);
+    }
+  };
+
+  const addSuggestedTag = (tag: string) => {
+    if (!formData.tags?.includes(tag)) {
+      setFormData({
+        ...formData,
+        tags: [...(formData.tags || []), tag],
+      });
+      setSuggestedTags(suggestedTags.filter(t => t !== tag));
+    }
+  };
+
   return (
     <AppLayout categories={categories} tags={tags}>
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="border-b px-4 py-2 md:px-6 md:py-3 flex-shrink-0">
-          <h1 className="text-xl font-bold">Create New Note</h1>
+        <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Create New Note</h1>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
-        <div className="h-full">
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="max-w-7xl mx-auto h-full">
             <form onSubmit={handleSubmit} className="flex flex-col h-full">
               {/* Title Section */}
-              <div className="px-4 md:px-6 pt-4 pb-3">
+              <div className="px-8 pt-6 pb-3">
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Untitled Note"
-                  className="text-2xl font-bold bg-transparent border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/40"
+                  className="text-3xl font-bold tracking-tight bg-transparent border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/40"
                   required
                   autoFocus
                 />
               </div>
 
               {/* Metadata and AI Assist Bar */}
-              <div className="px-4 md:px-6 pb-4 space-y-3">
+              <div className="px-8 pb-4 space-y-3">
                 {/* Language and Category Selectors */}
                 <div className="flex gap-3 items-center">
                   <div className="flex items-center gap-2">
@@ -325,7 +369,7 @@ export default function NewNotePage() {
                 </div>
 
                 {/* AI Assist Bar */}
-                <div className="bg-accent/10 rounded-lg p-3 border">
+                <div className="bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl p-4 border border-accent/30 shadow-sm hover:shadow-md transition-shadow duration-300">
                   <div className="flex gap-2 items-center">
                     <div className="flex-1 relative">
                       <Wand2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -359,13 +403,13 @@ export default function NewNotePage() {
               </div>
 
               {/* Content Editor */}
-              <div className="flex-1 px-4 md:px-6 pb-4">
-                <div className="h-full flex flex-col space-y-2" style={{ minHeight: 'calc(100vh - 350px)' }}>
+              <div className="flex-1 px-8 pb-6 min-h-[500px]">
+                <div className="h-full flex flex-col space-y-2">
                   <div className="flex items-center gap-2 px-1">
                     <span className="text-sm font-medium text-muted-foreground">Content</span>
                     <div className="flex-1 h-px bg-border/50"></div>
                   </div>
-                  <div className="flex-1 rounded-lg border">
+                  <div className="flex-1 bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
                     <Textarea
                       id="content"
                       value={formData.content}
@@ -379,7 +423,7 @@ export default function NewNotePage() {
               </div>
 
               {/* Tags and Actions Section */}
-              <div className="px-4 md:px-6 pb-4 space-y-4 border-t">
+              <div className="px-8 pb-6 space-y-4 border-t-2 border-border/30 bg-gradient-to-b from-background/50 to-background/30">
                 {/* Tags */}
                 <div className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -387,6 +431,20 @@ export default function NewNotePage() {
                     {formData.tags && formData.tags.length > 0 && (
                       <span className="text-xs text-muted-foreground">({formData.tags.length})</span>
                     )}
+                    <Button
+                      type="button"
+                      onClick={generateTagSuggestions}
+                      disabled={isGeneratingTags || (!formData.title && !formData.content)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 ml-auto"
+                    >
+                      {isGeneratingTags ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <><Tags className="h-3 w-3 mr-1" />Suggest Tags</>
+                      )}
+                    </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.tags && formData.tags.length > 0 && (
@@ -412,6 +470,25 @@ export default function NewNotePage() {
                       className="h-8 w-32 text-sm"
                     />
                   </div>
+                  {/* Suggested Tags */}
+                  {suggestedTags.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs text-muted-foreground mb-2">Suggested tags:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestedTags.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="px-3 py-1 text-sm font-normal rounded-full cursor-pointer hover:bg-primary/10 hover:border-primary/30 transition-colors"
+                            onClick={() => addSuggestedTag(tag)}
+                          >
+                            <span className="mr-1">+</span>
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {error && (

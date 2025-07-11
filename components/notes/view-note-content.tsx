@@ -2,19 +2,93 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Edit, Heart, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Calendar, Edit, Heart, X, Wand2, FileText, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { CodeSnippet } from '@/components/notes/code-snippet';
-import { AIAssistant } from '@/components/notes/ai-assistant';
 import { Note } from '@/types/note';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface ViewNoteContentProps {
   note: Note;
 }
 
 export function ViewNoteContent({ note }: ViewNoteContentProps) {
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [assistPrompt, setAssistPrompt] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleAssist = async () => {
+    if (!assistPrompt.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a prompt for the AI assistant',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      // Store the prompt in sessionStorage to pass to edit mode
+      sessionStorage.setItem(`ai-assist-${note.id}`, JSON.stringify({
+        prompt: assistPrompt.trim(),
+        originalContent: note.content,
+        timestamp: Date.now()
+      }));
+      
+      // Navigate to edit mode
+      router.push(`/notes/edit/${note.id}?ai-assist=true`);
+    } catch (error) {
+      console.error('AI assist error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to process AI assistance request',
+        variant: 'destructive',
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSummarize = async () => {
+    setIsSummarizing(true);
+    
+    try {
+      const response = await fetch('/api/llm/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: note.content,
+          title: note.title,
+          language: note.language,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to summarize');
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (error) {
+      console.error('Summarize error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to summarize the note',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -62,20 +136,56 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
               </div>
             </div>
 
-            {/* AI Assistant Toggle */}
+            {/* AI Assistant Input */}
             <div className="bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl p-4 border border-accent/30 shadow-sm hover:shadow-md transition-shadow duration-300">
-              <div className="flex items-center justify-between">
+              <div className="space-y-3">
                 <div>
                   <p className="text-sm font-medium">AI Assistant</p>
                   <p className="text-xs text-muted-foreground">Get help understanding or modifying this code</p>
                 </div>
-                <Button
-                  onClick={() => setShowAIAssistant(!showAIAssistant)}
-                  variant="secondary"
-                  size="sm"
-                >
-                  {showAIAssistant ? 'Hide Assistant' : 'Show Assistant'}
-                </Button>
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Wand2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={assistPrompt}
+                      onChange={(e) => setAssistPrompt(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAssist();
+                        }
+                      }}
+                      placeholder="Ask AI to help modify or explain this code..."
+                      className="pl-10 pr-3 h-9 text-sm"
+                      disabled={isProcessing}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSummarize}
+                    disabled={isSummarizing}
+                    size="sm"
+                    variant="outline"
+                    className="h-9"
+                  >
+                    {isSummarizing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <><FileText className="h-4 w-4 mr-1" />Summarize</>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleAssist}
+                    disabled={isProcessing || !assistPrompt.trim()}
+                    size="sm"
+                    className="h-9"
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'AI Assist'
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -83,6 +193,28 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
           {/* Content Section */}
           <div className="flex-1 px-8 pb-6 min-h-[500px]">
             <div className="space-y-2">
+              {/* Summary Section */}
+              {summary && (
+                <div className="mb-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Summary
+                      </h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{summary}</p>
+                    </div>
+                    <Button
+                      onClick={() => setSummary('')}
+                      size="sm"
+                      variant="ghost"
+                      className="ml-2 h-6 w-6 p-0"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center gap-2 px-1">
                 <span className="text-sm font-medium text-muted-foreground">Content</span>
                 <div className="flex-1 h-px bg-border/50"></div>
@@ -120,24 +252,6 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
         </div>
       </main>
 
-      {/* AI Assistant Modal/Drawer */}
-      {showAIAssistant && (
-        <div className="fixed inset-x-0 bottom-0 z-50 bg-background border-t-2 border-border shadow-2xl animate-in slide-in-from-bottom-2 duration-300">
-          <div className="max-w-7xl mx-auto p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">AI Assistant</h3>
-              <Button
-                onClick={() => setShowAIAssistant(false)}
-                variant="ghost"
-                size="sm"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <AIAssistant noteId={note.id} noteContent={note.content} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

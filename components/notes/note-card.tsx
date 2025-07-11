@@ -148,17 +148,20 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
+    <Card className="hover:shadow-lg transition-all duration-300 hover:border-primary/30 group relative overflow-hidden bg-gradient-to-br from-card to-card/95">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <CardHeader className="relative">
         <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle>
-              <Link href={noteUrl} className="hover:underline">
+          <div className="space-y-1 flex-1">
+            <CardTitle className="line-clamp-2">
+              <Link href={noteUrl} className="hover:text-primary transition-colors">
                 {note.title}
               </Link>
             </CardTitle>
-            <CardDescription>
-              {new Date(note.updatedAt).toLocaleString()}
+            <CardDescription className="flex items-center gap-2">
+              <span className="text-xs">{new Date(note.updatedAt).toLocaleDateString()}</span>
+              <span className="text-xs text-muted-foreground/60">•</span>
+              <span className="text-xs">{new Date(note.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -198,26 +201,45 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex gap-2 mb-3">
-          <Badge>{note.language}</Badge>
-          <Badge variant="outline">{note.category}</Badge>
+      <CardContent className="relative">
+        <div className="flex gap-2 mb-3 flex-wrap">
+          <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">{note.language}</Badge>
+          <Badge variant="outline" className="hover:bg-secondary transition-colors">{note.category}</Badge>
         </div>
-        {viewMode === 'detailed' && (
-          <CodeSnippet 
-            code={note.content} 
-            language={note.language}
-            className="mt-4 max-h-96"
-          />
+        {viewMode === 'detailed' ? (
+          <div className="mt-4">
+            <div className="rounded-lg border bg-muted/30 p-1">
+              <CodeSnippet 
+                code={note.content} 
+                language={note.language}
+                className="max-h-96"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <p className="text-sm text-muted-foreground line-clamp-3 font-mono">
+              {note.content.substring(0, 150)}{note.content.length > 150 ? '...' : ''}
+            </p>
+          </div>
         )}
       </CardContent>
-      <CardFooter>
-        <div className="flex gap-1 flex-wrap">
-          {note.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
+      <CardFooter className="relative border-t bg-muted/20">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex gap-1 flex-wrap flex-1">
+            {note.tags.length > 0 ? (
+              note.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs hover:bg-secondary/80 transition-colors">
+                  {tag}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-xs text-muted-foreground/60">No tags</span>
+            )}
+          </div>
+          {note.favorite && (
+            <Heart className="h-3 w-3 fill-red-500 text-red-500 ml-2" />
+          )}
         </div>
       </CardFooter>
     </Card>
