@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileCode } from 'lucide-react';
-import Link from 'next/link';
+import { FileCode } from 'lucide-react';
+import { AppHeader } from '@/components/layout/app-header';
 import { NoteTemplate } from '@/types/note';
 import { CodeSnippet } from '@/components/notes/code-snippet';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -205,17 +205,8 @@ jobs:
 
   return (
     <AppLayout categories={categories} tags={tags}>
-      <div className="min-h-screen bg-background flex flex-col">
-        <header className="border-b px-6 py-4 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-2xl font-bold">Code Templates</h1>
-          </div>
-        </header>
+      <div className="h-full flex flex-col">
+        <AppHeader title="Code Templates" />
 
         <main className="flex-1 overflow-y-auto px-6 py-4">
           <div className="max-w-6xl mx-auto">

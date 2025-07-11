@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, FileText, Hash, FolderOpen, Clock } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { Note } from '@/types/note';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface SearchDialogProps {
   open: boolean;
@@ -21,22 +22,27 @@ export function SearchDialog({ open, onOpenChange, notes }: SearchDialogProps) {
   const [results, setResults] = useState<Note[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useEffect(() => {
-    const fuse = new Fuse(notes, {
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  const fuse = useMemo(
+    () => new Fuse(notes, {
       keys: ['title', 'content', 'tags', 'category'],
       threshold: 0.3,
       includeScore: true,
       sortFn: (a, b) => a.score - b.score,
-    });
-    
-    if (searchQuery.trim()) {
-      const searchResults = fuse.search(searchQuery);
+    }),
+    [notes]
+  );
+
+  useEffect(() => {
+    if (debouncedSearchQuery.trim()) {
+      const searchResults = fuse.search(debouncedSearchQuery);
       setResults(searchResults.slice(0, 8).map(result => result.item));
     } else {
       setResults(notes.slice(0, 8));
     }
     setSelectedIndex(0);
-  }, [searchQuery, notes]);
+  }, [debouncedSearchQuery, notes, fuse]);
 
   useEffect(() => {
     if (!open) {
@@ -46,7 +52,13 @@ export function SearchDialog({ open, onOpenChange, notes }: SearchDialogProps) {
     }
   }, [open]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleSelectNote = useCallback((note: Note) => {
+    const url = `/notes/view/${note.id}`;
+    router.push(url);
+    onOpenChange(false);
+  }, [router, onOpenChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev + 1) % results.length);
@@ -57,13 +69,7 @@ export function SearchDialog({ open, onOpenChange, notes }: SearchDialogProps) {
       e.preventDefault();
       handleSelectNote(results[selectedIndex]);
     }
-  };
-
-  const handleSelectNote = (note: Note) => {
-    const url = `/notes/view/${note.id}`;
-    router.push(url);
-    onOpenChange(false);
-  };
+  }, [results, selectedIndex, handleSelectNote]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

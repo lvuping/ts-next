@@ -10,12 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { X, Trash2, Wand2, Eye, Code } from 'lucide-react';
+import { X, Trash2, Wand2, Eye, Code, Sparkles, Hash } from 'lucide-react';
 import Link from 'next/link';
 import { Note, NoteInput } from '@/types/note';
 import { CodeSnippet } from '@/components/notes/code-snippet';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
+import { AppHeader } from '@/components/layout/app-header';
 
 const LANGUAGES = [
   'plaintext', 'abap', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 
@@ -41,6 +42,9 @@ export default function EditNotePage({ params }: Props) {
   const [assistLoading, setAssistLoading] = useState(false);
   const [showDiffViewer, setShowDiffViewer] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('');
+  const [generatingTags, setGeneratingTags] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [generatingSummary, setGeneratingSummary] = useState(false);
   const [formData, setFormData] = useState<Partial<NoteInput>>({
     title: '',
     content: '',
@@ -228,6 +232,73 @@ export default function EditNotePage({ params }: Props) {
     await handleAssist();
   };
 
+  const handleGenerateTags = async () => {
+    if (!formData.content?.trim()) return;
+
+    setGeneratingTags(true);
+    try {
+      const response = await fetch('/api/llm/generate-tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: formData.content,
+          title: formData.title,
+          language: formData.language,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate tags');
+      }
+
+      const data = await response.json();
+      const newTags = data.tags.filter((tag: string) => !formData.tags?.includes(tag));
+      
+      if (newTags.length > 0) {
+        setFormData({
+          ...formData,
+          tags: [...(formData.tags || []), ...newTags],
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate tags');
+    } finally {
+      setGeneratingTags(false);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!formData.content?.trim()) return;
+
+    setGeneratingSummary(true);
+    try {
+      const response = await fetch('/api/llm/generate-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: formData.content,
+          title: formData.title,
+          language: formData.language,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate summary');
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate summary');
+    } finally {
+      setGeneratingSummary(false);
+    }
+  };
+
   // Auto-trigger assist if coming from preview with AI assist
   useEffect(() => {
     if (searchParams.get('ai-assist') === 'true' && assistPrompt && formData.content && !assistLoading) {
@@ -259,10 +330,11 @@ export default function EditNotePage({ params }: Props) {
 
   return (
     <AppLayout categories={categories} tags={tags}>
-      <div className="h-screen bg-background flex flex-col overflow-hidden">
-        <header className="border-b px-4 py-2 md:px-6 md:py-3 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Edit Note</h1>
+      <div className="h-full flex flex-col">
+        <AppHeader 
+          title="Edit Note" 
+          showSearch={false}
+          subtitle={
             <Button
               variant="ghost"
               size="sm"
@@ -270,9 +342,10 @@ export default function EditNotePage({ params }: Props) {
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4" />
+              <span className="ml-2">Delete</span>
             </Button>
-          </div>
-        </header>
+          }
+        />
 
         <main className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
@@ -404,11 +477,30 @@ export default function EditNotePage({ params }: Props) {
                 <div className="px-4 md:px-6 pb-4 space-y-4 border-t">
                   {/* Tags */}
                   <div className="pt-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-sm font-medium text-muted-foreground">Tags</label>
-                      {formData.tags && formData.tags.length > 0 && (
-                        <span className="text-xs text-muted-foreground">({formData.tags.length})</span>
-                      )}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-muted-foreground">Tags</label>
+                        {formData.tags && formData.tags.length > 0 && (
+                          <span className="text-xs text-muted-foreground">({formData.tags.length})</span>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleGenerateTags}
+                        disabled={generatingTags || !formData.content?.trim()}
+                        className="h-7 px-2 text-xs"
+                      >
+                        {generatingTags ? (
+                          <>Generating...</>
+                        ) : (
+                          <>
+                            <Hash className="h-3 w-3 mr-1" />
+                            Generate Tags
+                          </>
+                        )}
+                      </Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {formData.tags && formData.tags.length > 0 && (
@@ -435,6 +527,37 @@ export default function EditNotePage({ params }: Props) {
                       />
                     </div>
                   </div>
+
+                  {/* Summary Section */}
+                  {(summary || formData.content?.trim()) && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-muted-foreground">Summary</label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleGenerateSummary}
+                          disabled={generatingSummary || !formData.content?.trim()}
+                          className="h-7 px-2 text-xs"
+                        >
+                          {generatingSummary ? (
+                            <>Generating...</>
+                          ) : (
+                            <>
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              {summary ? 'Regenerate' : 'Generate Summary'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {summary && (
+                        <div className="bg-muted/30 rounded-lg p-3 text-sm text-muted-foreground">
+                          {summary}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {error && (
                     <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">{error}</div>

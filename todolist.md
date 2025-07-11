@@ -1,24 +1,32 @@
 ## Todo list
 
-- New note 의 레이아웃과, 홈화면에서 노트들을 볼때의 layout 과 비슷하게 만들어줘. 지금은 여백이 너무 넓어.
 
-### 🚀 High Priority (단기 목표)
-1. **Export 기능 추가**
-   - Markdown 파일로 내보내기
-   - Markdown 파일로 import
-   - 선택한 노트들 일괄 내보내기
-   
-2. **노트 버전 관리**
-   - 변경사항 diff 보기
+1. **AI 기능 확장**
+## Gemini API
+Gemini API 는 아래와 같은 방식으로 사용
+- .env 에 있는 API 사용 
+- "gemini-2.5-flash" 사용(태그, 요약)
+- "gemini-2.5-pro" 사용(content 생성)
+```
+import { GoogleGenAI } from "@google/genai";
 
-3. **성능 최적화**
-   - 가상 스크롤링 구현 (대량 노트 처리)
-   - 이미지 및 코드 지연 로딩
-   - 검색 인덱싱 개선
+// The client gets the API key from the environment variable `GEMINI_API_KEY`.
+const ai = new GoogleGenAI({});
 
-3. **AI 기능 확장**
-   - 자동 태그 제안
-   - 노트 요약 기능 
+async function main() {
+  const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+          contents: "Explain how AI works in a few words",
+            });
+              console.log(response.text);
+              }
+
+              main();
+```
+
+2. 최상단에 있는 Search, logout, dark mode, light mode 변경등이 특정화면에선 안보여. 일관성을 유지하도록 전체적인 UI 을 점검 후 수정해줘. 
+
+3. 성능향상을 위해 코드 리펙토링을 진행해줘. 성능과 가독성을 위해서 코드리펙토링이 필요해 
 
 ## Must check
 - 모든 수정후엔 반드시 기능 테스트를 진행해줘. (route, event)

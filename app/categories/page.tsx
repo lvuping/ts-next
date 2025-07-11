@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Edit, Plus, FolderIcon, Server, Database, Cloud, Shield, Code } from 'lucide-react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { AppHeader } from '@/components/layout/app-header';
 
 interface Category {
   id: number;
@@ -171,8 +173,11 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Manage Categories</h1>
+    <AppLayout>
+      <div className="h-full flex flex-col">
+        <AppHeader title="Manage Categories" />
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-4xl mx-auto">
 
       <Card className="mb-6">
         <CardHeader>
@@ -316,6 +321,9 @@ export default function CategoriesPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 }

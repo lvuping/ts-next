@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar, Edit, Heart, X, Wand2, FileText, Loader2 } from 'lucide-react';
+import { AppHeader } from '@/components/layout/app-header';
 import Link from 'next/link';
 import { CodeSnippet } from '@/components/notes/code-snippet';
 import { Note } from '@/types/note';
@@ -91,18 +92,19 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">View Note</h1>
+    <div className="h-full flex flex-col">
+      <AppHeader 
+        title="View Note" 
+        showSearch={false}
+        subtitle={
           <Link href={`/notes/edit/${note.id}`}>
             <Button variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <main className="flex-1 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         <div className="max-w-7xl mx-auto h-full flex flex-col overflow-y-auto">

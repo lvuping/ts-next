@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,14 +20,14 @@ interface NoteCardProps {
   onToggleFavorite?: (id: string) => void;
 }
 
-export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }: NoteCardProps) {
+function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite }: NoteCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const { isViewMode } = useViewMode();
   
   const noteUrl = isViewMode ? `/notes/edit/${note.id}` : `/notes/view/${note.id}`;
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!confirm('Are you sure you want to delete this note?')) return;
     
     setIsDeleting(true);
@@ -43,9 +44,9 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [note.id, onDelete]);
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = useCallback(async () => {
     try {
       const response = await fetch(`/api/notes/${note.id}/favorite`, {
         method: 'POST',
@@ -57,17 +58,17 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
     }
-  };
+  }, [note.id, onToggleFavorite]);
 
-  const handleCopyContent = async () => {
+  const handleCopyContent = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(note.content);
     } catch (error) {
       console.error('Failed to copy:', error);
     }
-  };
+  }, [note.content]);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     const text = `${note.title}\n\n${note.content}`;
     if (navigator.share) {
       try {
@@ -78,7 +79,7 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
     } else {
       handleCopyContent();
     }
-  };
+  }, [note.title, note.content, handleCopyContent]);
 
   if (viewMode === 'compact') {
     return (
@@ -245,3 +246,15 @@ export function NoteCard({ note, viewMode = 'card', onDelete, onToggleFavorite }
     </Card>
   );
 }
+
+export const NoteCard = memo(NoteCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.note.id === nextProps.note.id &&
+    prevProps.note.title === nextProps.note.title &&
+    prevProps.note.content === nextProps.note.content &&
+    prevProps.note.favorite === nextProps.note.favorite &&
+    prevProps.note.updatedAt === nextProps.note.updatedAt &&
+    prevProps.viewMode === nextProps.viewMode &&
+    JSON.stringify(prevProps.note.tags) === JSON.stringify(nextProps.note.tags)
+  );
+});

@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { X, Wand2, Tags, Loader2 } from 'lucide-react';
+import { AppHeader } from '@/components/layout/app-header';
 import { NoteInput } from '@/types/note';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -304,10 +305,8 @@ export default function NewNotePage() {
 
   return (
     <AppLayout categories={categories} tags={tags}>
-      <div className="h-screen bg-background flex flex-col overflow-hidden">
-        <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Create New Note</h1>
-        </header>
+      <div className="h-full flex flex-col">
+        <AppHeader title="Create New Note" />
 
         <main className="flex-1 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         <div className="max-w-7xl mx-auto h-full overflow-hidden">

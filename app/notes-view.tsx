@@ -6,16 +6,31 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { NoteCard } from '@/components/notes/note-card';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { SearchDialog } from '@/components/notes/search-dialog';
-import { StatsCard } from '@/components/notes/stats-card';
-import { LayoutGrid, List, TableIcon, LogOut, Search, BarChart3, Download, Upload, Loader2 } from 'lucide-react';
+import { AppHeader } from '@/components/layout/app-header';
+import { LayoutGrid, List, TableIcon, Loader2 } from 'lucide-react';
 import { Note } from '@/types/note';
 import { useRouter } from 'next/navigation';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useDoubleKeyPress } from '@/hooks/use-double-key-press';
-import { ExportDialog } from '@/components/notes/export-dialog';
-import { ImportDialog } from '@/components/notes/import-dialog';
+import dynamic from 'next/dynamic';
+
+// Lazy load heavy components
+const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
+  ssr: false,
+});
+
+const StatsCard = dynamic(() => import('@/components/notes/stats-card').then(mod => ({ default: mod.StatsCard })), {
+  ssr: false,
+  loading: () => <div className="h-32 bg-muted animate-pulse rounded-lg" />,
+});
+
+const ExportDialog = dynamic(() => import('@/components/notes/export-dialog').then(mod => ({ default: mod.ExportDialog })), {
+  ssr: false,
+});
+
+const ImportDialog = dynamic(() => import('@/components/notes/import-dialog').then(mod => ({ default: mod.ImportDialog })), {
+  ssr: false,
+});
 
 type ViewMode = 'detailed' | 'card' | 'compact';
 
@@ -61,39 +76,36 @@ export function NotesView() {
   }, []);
 
   useEffect(() => {
-    const fetchNotes = async () => {
+    const fetchData = async () => {
       try {
         const params = new URLSearchParams(searchParams);
-        const response = await fetch(`/api/notes?${params.toString()}`);
-        if (response.ok) {
-          const data = await response.json();
+        // Parallel API calls
+        const [notesResponse, metadataResponse] = await Promise.all([
+          fetch(`/api/notes?${params.toString()}`),
+          fetch('/api/notes/metadata')
+        ]);
+
+        if (notesResponse.ok) {
+          const data = await notesResponse.json();
           setNotes(data);
           // Initially display first batch
           setDisplayedNotes(data.slice(0, NOTES_PER_PAGE));
           setHasMore(data.length > NOTES_PER_PAGE);
         }
-      } catch (error) {
-        console.error('Failed to fetch notes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    const fetchMetadata = async () => {
-      try {
-        const response = await fetch('/api/notes/metadata');
-        if (response.ok) {
-          const data = await response.json();
+        if (metadataResponse.ok) {
+          const data = await metadataResponse.json();
           setCategories(data.categories);
           setTags(data.tags);
         }
       } catch (error) {
-        console.error('Failed to fetch metadata:', error);
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
-    fetchNotes();
-    fetchMetadata();
+    fetchData();
   }, [searchParams]);
 
   // Load more notes when reaching the bottom
@@ -159,14 +171,6 @@ export function NotesView() {
     setDisplayedNotes(displayedNotes.map(updateNote));
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth', { method: 'DELETE' });
-      router.push('/login');
-    } catch (error) {
-      console.error('Failed to logout:', error);
-    }
-  };
 
   const activeFilter = searchParams.get('category') || searchParams.get('tag') || 
                        (searchParams.get('favorite') === 'true' ? 'Favorites' : null) ||
@@ -175,71 +179,45 @@ export function NotesView() {
   return (
     <AppLayout categories={categories} tags={tags}>
       <div className="h-full flex flex-col">
-        <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Notes PKM</h1>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setShowSearch(true)}
-                title="Search notes (Double tap Control)"
+        <AppHeader
+          title="Notes PKM"
+          showSearch
+          showStats
+          showExport
+          showImport
+          onSearch={() => setShowSearch(true)}
+          onStats={() => setShowStats(!showStats)}
+          onExport={() => setShowExport(true)}
+          onImport={() => setShowImport(true)}
+          subtitle={
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing {displayedNotes.length} of {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+                  {activeFilter && (
+                    <span> • Filtered by: <span className="font-medium">{activeFilter}</span></span>
+                  )}
+                </p>
+              </div>
+              
+              <ToggleGroup 
+                type="single" 
+                value={viewMode} 
+                onValueChange={handleViewModeChange}
               >
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setShowStats(!showStats)}>
-                <BarChart3 className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setShowExport(true)}
-                title="Export notes"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setShowImport(true)}
-                title="Import notes"
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-              <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-              </Button>
+                <ToggleGroupItem value="detailed" aria-label="Detailed view">
+                  <List className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="card" aria-label="Card view">
+                  <LayoutGrid className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="compact" aria-label="Compact view">
+                  <TableIcon className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
-          </div>
-          
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center gap-4">
-              <p className="text-sm text-muted-foreground">
-                Showing {displayedNotes.length} of {notes.length} {notes.length === 1 ? 'note' : 'notes'}
-                {activeFilter && (
-                  <span> • Filtered by: <span className="font-medium">{activeFilter}</span></span>
-                )}
-              </p>
-            </div>
-            
-            <ToggleGroup 
-              type="single" 
-              value={viewMode} 
-              onValueChange={handleViewModeChange}
-            >
-              <ToggleGroupItem value="detailed" aria-label="Detailed view">
-                <List className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="compact" aria-label="Compact view">
-                <TableIcon className="h-4 w-4" />
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-        </header>
+          }
+        />
         
         <div className="flex-1 overflow-auto p-4 md:p-6 bg-gradient-to-br from-background via-background to-primary/5">
           {showStats && (
