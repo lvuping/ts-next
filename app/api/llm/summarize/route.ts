@@ -6,7 +6,7 @@ const ai = new GoogleGenAI({});
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, title, language } = await request.json();
+    const { content, title, language, userLanguage } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const languageInstructions = {
+      en: 'Please respond in English.',
+      ko: '한국어로 답변해 주세요.',
+      de: 'Bitte antworten Sie auf Deutsch.'
+    };
 
     const prompt = `Please provide a concise summary of the following ${language} code/note.
     
@@ -23,7 +29,9 @@ Language: ${language}
 Content:
 ${content}
 
-Provide a 2-3 sentence summary that captures the main purpose and key functionality of this code/note. Focus on what the code does and its primary use case.`;
+Provide a 2-3 sentence summary that captures the main purpose and key functionality of this code/note. Focus on what the code does and its primary use case.
+
+${languageInstructions[userLanguage as keyof typeof languageInstructions] || languageInstructions.en}`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',

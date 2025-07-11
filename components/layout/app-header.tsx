@@ -49,24 +49,30 @@ export function AppHeader({
   };
 
   return (
-    <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+    <header className="border-b-2 border-border/50 px-4 md:px-6 py-3 md:py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent truncate">
           {title}
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           {showSearch && onSearch && (
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={onSearch}
               title={t.app.search}
+              className="h-8 w-8 md:h-9 md:w-9"
             >
               <Search className="h-4 w-4" />
             </Button>
           )}
           {showStats && onStats && (
-            <Button variant="ghost" size="icon" onClick={onStats}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onStats}
+              className="h-8 w-8 md:h-9 md:w-9"
+            >
               <BarChart3 className="h-4 w-4" />
             </Button>
           )}
@@ -76,6 +82,7 @@ export function AppHeader({
               size="icon" 
               onClick={onExport}
               title="Export notes"
+              className="h-8 w-8 md:h-9 md:w-9 hidden sm:flex"
             >
               <Download className="h-4 w-4" />
             </Button>
@@ -86,6 +93,7 @@ export function AppHeader({
               size="icon" 
               onClick={onImport}
               title="Import notes"
+              className="h-8 w-8 md:h-9 md:w-9 hidden sm:flex"
             >
               <Upload className="h-4 w-4" />
             </Button>
@@ -93,7 +101,13 @@ export function AppHeader({
           <LanguageSelector />
           {showThemeToggle && <ThemeToggle />}
           {showLogout && (
-            <Button variant="ghost" size="icon" onClick={handleLogout} title={t.app.logout}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleLogout} 
+              title={t.app.logout}
+              className="h-8 w-8 md:h-9 md:w-9"
+            >
               <LogOut className="h-4 w-4" />
             </Button>
           )}

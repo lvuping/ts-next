@@ -5,7 +5,7 @@ const ai = new GoogleGenAI({});
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, content, language, category, existingTags } = await request.json();
+    const { title, content, language, category, existingTags, userLanguage } = await request.json();
 
     if (!title && !content) {
       return NextResponse.json(
@@ -13,6 +13,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const languageInstructions = {
+      en: 'Suggest tags in English.',
+      ko: '태그를 한국어로 제안해주세요.',
+      de: 'Schlagen Sie Tags auf Deutsch vor.'
+    };
 
     const prompt = `Based on the following code/note, suggest 3-5 relevant tags that would help categorize and find this content later.
 
@@ -32,7 +38,9 @@ Rules:
 5. For programming content, include relevant frameworks, libraries, or patterns
 6. Be specific but not overly detailed
 
-Return only a JSON array of suggested tags like: ["tag1", "tag2", "tag3"]`;
+Return only a JSON array of suggested tags like: ["tag1", "tag2", "tag3"]
+
+${languageInstructions[userLanguage as keyof typeof languageInstructions] || languageInstructions.en}`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',

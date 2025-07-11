@@ -7,9 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileCode } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
-import { NoteTemplate } from '@/types/note';
+import { NoteTemplate, Note } from '@/types/note';
 import { CodeSnippet } from '@/components/notes/code-snippet';
 import { AppLayout } from '@/components/layout/app-layout';
+import dynamic from 'next/dynamic';
+import { useGlobalSearch } from '@/hooks/use-global-search';
+
+// Lazy load SearchDialog
+const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
+  ssr: false,
+});
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -17,10 +24,30 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
+  const { showSearch, setShowSearch } = useGlobalSearch();
 
   useEffect(() => {
     fetchTemplates();
   }, []);
+
+  useEffect(() => {
+    if (showSearch && allNotes.length === 0) {
+      fetchAllNotes();
+    }
+  }, [showSearch, allNotes.length]);
+
+  const fetchAllNotes = async () => {
+    try {
+      const response = await fetch('/api/notes');
+      if (response.ok) {
+        const data = await response.json();
+        setAllNotes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    }
+  };
 
   const fetchTemplates = async () => {
     try {
@@ -206,7 +233,11 @@ jobs:
   return (
     <AppLayout categories={categories} tags={tags}>
       <div className="h-full flex flex-col">
-        <AppHeader title="Code Templates" />
+        <AppHeader 
+          title="Code Templates" 
+          showSearch={true}
+          onSearch={() => setShowSearch(true)}
+        />
 
         <main className="flex-1 overflow-y-auto px-6 py-4">
           <div className="max-w-6xl mx-auto">
@@ -256,6 +287,12 @@ jobs:
           </div>
         </main>
       </div>
+
+      <SearchDialog 
+        open={showSearch} 
+        onOpenChange={setShowSearch} 
+        notes={allNotes} 
+      />
     </AppLayout>
   );
 }

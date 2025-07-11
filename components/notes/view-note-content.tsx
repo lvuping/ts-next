@@ -7,11 +7,14 @@ import { Calendar, Edit, Heart, X, Wand2, FileText, Loader2 } from 'lucide-react
 import { AppHeader } from '@/components/layout/app-header';
 import Link from 'next/link';
 import { CodeSnippet } from '@/components/notes/code-snippet';
+import { MarkdownRenderer } from '@/components/notes/markdown-renderer';
 import { Note } from '@/types/note';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { useLanguage } from '@/contexts/language-context';
+import { useGlobalSearch } from '@/hooks/use-global-search';
 
 // Lazy load SearchDialog
 const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
@@ -25,12 +28,13 @@ interface ViewNoteContentProps {
 export function ViewNoteContent({ note }: ViewNoteContentProps) {
   const [assistPrompt, setAssistPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [summary, setSummary] = useState('');
+  const [summary, setSummary] = useState(note.summary || '');
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const [allNotes, setAllNotes] = useState<Note[]>([]);
   const { toast } = useToast();
   const router = useRouter();
+  const { language } = useLanguage();
+  const { showSearch, setShowSearch } = useGlobalSearch();
 
   const fetchAllNotes = async () => {
     try {
@@ -97,6 +101,7 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
           content: note.content,
           title: note.title,
           language: note.language,
+          userLanguage: language,
         }),
       });
 
@@ -106,6 +111,27 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
 
       const data = await response.json();
       setSummary(data.summary);
+      
+      // Save the summary to the database
+      const updateResponse = await fetch(`/api/notes/${note.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...note,
+          summary: data.summary,
+        }),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to save summary');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Summary generated and saved successfully',
+      });
     } catch (error) {
       console.error('Summarize error:', error);
       toast({
@@ -251,11 +277,20 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
               </div>
               <div className="h-full bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
                 <div className="h-full p-1">
-                  <CodeSnippet
-                    code={note.content}
-                    language={note.language}
-                    className="h-full"
-                  />
+                  {note.language === 'markdown' ? (
+                    <div className="p-4 overflow-auto h-full">
+                      <MarkdownRenderer
+                        content={note.content}
+                        className="h-full"
+                      />
+                    </div>
+                  ) : (
+                    <CodeSnippet
+                      code={note.content}
+                      language={note.language}
+                      className="h-full"
+                    />
+                  )}
                 </div>
               </div>
             </div>

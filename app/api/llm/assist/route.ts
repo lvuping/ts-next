@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt, context, language } = await request.json();
+    const { prompt, context, language, userLanguage } = await request.json();
 
     if (!prompt) {
       return NextResponse.json(
@@ -27,10 +27,17 @@ export async function POST(request: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
+    const languageInstructions = {
+      en: 'Respond in English.',
+      ko: '한국어로 답변해 주세요.',
+      de: 'Bitte antworten Sie auf Deutsch.'
+    };
+
     const systemPrompt = `You are a code assistant helping with ${language || 'code'} development. 
     Provide clean, well-structured code that follows best practices and common patterns.
     ${context ? 'Modify the existing code based on the request.' : 'Generate new code based on the request.'}
-    Only return the code without explanations unless specifically asked.`;
+    Only return the code without explanations unless specifically asked.
+    ${languageInstructions[userLanguage as keyof typeof languageInstructions] || languageInstructions.en}`;
 
     const userPrompt = context 
       ? `Existing code:\n\`\`\`${language}\n${context}\n\`\`\`\n\nRequest: ${prompt}`

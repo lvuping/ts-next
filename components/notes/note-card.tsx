@@ -219,9 +219,20 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
           </div>
         ) : (
           <div className="mt-3">
-            <p className="text-sm text-muted-foreground line-clamp-3 font-mono">
-              {note.content.substring(0, 150)}{note.content.length > 150 ? '...' : ''}
-            </p>
+            {note.summary ? (
+              <div className="space-y-2">
+                <p className="text-sm text-foreground line-clamp-2">
+                  {note.summary}
+                </p>
+                <p className="text-xs text-muted-foreground line-clamp-2 font-mono">
+                  {note.content.substring(0, 100)}{note.content.length > 100 ? '...' : ''}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground line-clamp-3 font-mono">
+                {note.content.substring(0, 150)}{note.content.length > 150 ? '...' : ''}
+              </p>
+            )}
           </div>
         )}
       </CardContent>
@@ -254,6 +265,7 @@ export const NoteCard = memo(NoteCardComponent, (prevProps, nextProps) => {
     prevProps.note.content === nextProps.note.content &&
     prevProps.note.favorite === nextProps.note.favorite &&
     prevProps.note.updatedAt === nextProps.note.updatedAt &&
+    prevProps.note.summary === nextProps.note.summary &&
     prevProps.viewMode === nextProps.viewMode &&
     JSON.stringify(prevProps.note.tags) === JSON.stringify(nextProps.note.tags)
   );

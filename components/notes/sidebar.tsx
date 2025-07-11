@@ -194,11 +194,16 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
     return (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="fixed top-4 left-4 z-50">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="fixed top-[72px] left-4 z-40 shadow-md bg-background"
+            aria-label="Open navigation menu"
+          >
             <Menu className="h-4 w-4" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64">
+        <SheetContent side="left" className="w-64 pt-16">
           <SidebarContent />
         </SheetContent>
       </Sheet>

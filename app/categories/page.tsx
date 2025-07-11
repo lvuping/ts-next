@@ -9,6 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Trash2, Edit, Plus, FolderIcon, Server, Database, Cloud, Shield, Code } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { AppHeader } from '@/components/layout/app-header';
+import { Note } from '@/types/note';
+import dynamic from 'next/dynamic';
+import { useGlobalSearch } from '@/hooks/use-global-search';
+
+// Lazy load SearchDialog
+const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
+  ssr: false,
+});
 
 interface Category {
   id: number;
@@ -45,11 +53,31 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategory, setNewCategory] = useState({ name: '', color: '#6B7280', icon: 'folder' });
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
   const { toast } = useToast();
+  const { showSearch, setShowSearch } = useGlobalSearch();
 
   useEffect(() => {
     fetchCategories();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (showSearch && allNotes.length === 0) {
+      fetchAllNotes();
+    }
+  }, [showSearch, allNotes.length]);
+
+  const fetchAllNotes = async () => {
+    try {
+      const response = await fetch('/api/notes');
+      if (response.ok) {
+        const data = await response.json();
+        setAllNotes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -175,7 +203,11 @@ export default function CategoriesPage() {
   return (
     <AppLayout>
       <div className="h-full flex flex-col">
-        <AppHeader title="Manage Categories" />
+        <AppHeader 
+          title="Manage Categories" 
+          showSearch={true}
+          onSearch={() => setShowSearch(true)}
+        />
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto">
 
@@ -324,6 +356,12 @@ export default function CategoriesPage() {
           </div>
         </div>
       </div>
+
+      <SearchDialog 
+        open={showSearch} 
+        onOpenChange={setShowSearch} 
+        notes={allNotes} 
+      />
     </AppLayout>
   );
 }

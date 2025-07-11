@@ -19,6 +19,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { useLanguage } from '@/contexts/language-context';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import dynamic from 'next/dynamic';
+import { useGlobalSearch } from '@/hooks/use-global-search';
 
 // Lazy load SearchDialog
 const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
@@ -64,8 +65,8 @@ export default function EditNotePage({ params }: Props) {
   });
   const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
-  const [showSearch, setShowSearch] = useState(false);
   const [allNotes, setAllNotes] = useState<Note[]>([]);
+  const { showSearch, setShowSearch } = useGlobalSearch();
   
   const fetchAllNotes = async () => {
     try {
@@ -226,6 +227,7 @@ export default function EditNotePage({ params }: Props) {
           prompt: assistPrompt,
           context: formData.content,
           language: formData.language,
+          userLanguage: language,
         }),
       });
 

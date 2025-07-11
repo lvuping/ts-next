@@ -8,10 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { X, Wand2, Tags, Loader2 } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
-import { NoteInput } from '@/types/note';
+import { NoteInput, Note } from '@/types/note';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { useLanguage } from '@/contexts/language-context';
+import dynamic from 'next/dynamic';
+import { useGlobalSearch } from '@/hooks/use-global-search';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +24,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// Lazy load SearchDialog
+const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
+  ssr: false,
+});
+
 const LANGUAGES = [
   'plaintext', 'abap', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 
   'go', 'rust', 'php', 'ruby', 'swift', 'kotlin', 'sql', 'html', 'css', 'scss', 
@@ -29,6 +37,7 @@ const LANGUAGES = [
 
 export default function NewNotePage() {
   const router = useRouter();
+  const { language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tagInput, setTagInput] = useState('');
@@ -51,6 +60,26 @@ export default function NewNotePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
+  const { showSearch, setShowSearch } = useGlobalSearch();
+
+  const fetchAllNotes = async () => {
+    try {
+      const response = await fetch('/api/notes');
+      if (response.ok) {
+        const data = await response.json();
+        setAllNotes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (showSearch && allNotes.length === 0) {
+      fetchAllNotes();
+    }
+  }, [showSearch, allNotes.length]);
 
   const detectLanguageAndCategory = () => {
     const combinedText = `${formData.title} ${formData.content}`.toLowerCase();
@@ -203,6 +232,7 @@ export default function NewNotePage() {
           prompt: assistPrompt,
           context: formData.content,
           language: formData.language,
+          userLanguage: language,
         }),
       });
 
@@ -279,6 +309,7 @@ export default function NewNotePage() {
           language: formData.language,
           category: formData.category,
           existingTags: tags,
+          userLanguage: language,
         }),
       });
 
@@ -306,7 +337,11 @@ export default function NewNotePage() {
   return (
     <AppLayout categories={categories} tags={tags}>
       <div className="h-full flex flex-col">
-        <AppHeader title="Create New Note" />
+        <AppHeader 
+          title="Create New Note" 
+          showSearch={true}
+          onSearch={() => setShowSearch(true)}
+        />
 
         <main className="flex-1 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
         <div className="max-w-7xl mx-auto h-full overflow-hidden">
@@ -551,6 +586,12 @@ export default function NewNotePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SearchDialog 
+        open={showSearch} 
+        onOpenChange={setShowSearch} 
+        notes={allNotes} 
+      />
     </AppLayout>
   );
 }

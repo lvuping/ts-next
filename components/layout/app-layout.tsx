@@ -36,24 +36,33 @@ export function AppLayout({ children, categories = [], tags = [] }: AppLayoutPro
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <div 
-        className={cn(
-          "transition-all duration-200 ease-out flex-shrink-0",
-          (sidebarOpen || sidebarHovered) && !isMobile ? "w-64" : "w-0"
-        )}
-        onMouseEnter={() => !sidebarOpen && !isTransitioning && setSidebarHovered(true)}
-        onMouseLeave={() => setSidebarHovered(false)}
-      >
-        <div className={cn(
-          "fixed h-full overflow-hidden transition-all duration-200 ease-out border-r bg-background/95 backdrop-blur-sm shadow-sm",
-          (sidebarOpen || sidebarHovered) && !isMobile ? "w-64" : "w-0"
-        )}>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Sidebar categories={categories} tags={tags} onClose={() => handleSidebarToggle(false)} />
-          </Suspense>
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <div 
+          className={cn(
+            "transition-all duration-200 ease-out flex-shrink-0",
+            (sidebarOpen || sidebarHovered) ? "w-64" : "w-0"
+          )}
+          onMouseEnter={() => !sidebarOpen && !isTransitioning && setSidebarHovered(true)}
+          onMouseLeave={() => setSidebarHovered(false)}
+        >
+          <div className={cn(
+            "fixed h-full overflow-hidden transition-all duration-200 ease-out border-r bg-background/95 backdrop-blur-sm shadow-sm",
+            (sidebarOpen || sidebarHovered) ? "w-64" : "w-0"
+          )}>
+            <Suspense fallback={<LoadingSpinner />}>
+              <Sidebar categories={categories} tags={tags} onClose={() => handleSidebarToggle(false)} />
+            </Suspense>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Mobile Sidebar */}
+      {isMobile && (
+        <Suspense fallback={<LoadingSpinner />}>
+          <Sidebar categories={categories} tags={tags} />
+        </Suspense>
+      )}
 
       {/* Hover Area when sidebar is closed */}
       {!sidebarOpen && !isMobile && !isTransitioning && (
@@ -65,8 +74,8 @@ export function AppLayout({ children, categories = [], tags = [] }: AppLayoutPro
 
       {/* Main Content */}
       <div className="flex-1 relative min-w-0">
-        {/* Floating Sidebar Toggle Button */}
-        {!sidebarOpen && (
+        {/* Floating Sidebar Toggle Button - Desktop Only */}
+        {!sidebarOpen && !isMobile && (
           <Button
             variant="ghost"
             size="icon"
