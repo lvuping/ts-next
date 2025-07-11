@@ -4,15 +4,15 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { NoteCard } from '@/components/notes/note-card';
-import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AppHeader } from '@/components/layout/app-header';
 import { LayoutGrid, List, TableIcon, Loader2 } from 'lucide-react';
 import { Note } from '@/types/note';
 import { useRouter } from 'next/navigation';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
-import { useDoubleKeyPress } from '@/hooks/use-double-key-press';
+import { EmptyState } from '@/components/ui/empty-state';
 import dynamic from 'next/dynamic';
+import { FileText } from 'lucide-react';
 
 // Lazy load heavy components
 const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
@@ -54,16 +54,17 @@ export function NotesView() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Use double Control key press for search
-  useDoubleKeyPress({
-    key: 'Control',
-    handler: () => setShowSearch(true),
-    timeout: 400
-  });
-
-  // Keep other keyboard shortcuts
+  // Keyboard shortcuts including platform-specific search trigger
   useKeyboardShortcuts([
     { key: '/', handler: () => setShowSearch(true) },
+    { 
+      key: ' ', // Space key
+      handler: () => setShowSearch(true),
+      platformSpecific: {
+        mac: { metaKey: true }, // Command+Space on Mac
+        windows: { altKey: true } // Alt+Space on Windows
+      }
+    },
     { key: 'n', ctrlKey: true, handler: () => router.push('/notes/new') },
     { key: 's', ctrlKey: true, shiftKey: true, handler: () => setShowStats(!showStats) },
   ]);
@@ -230,12 +231,15 @@ export function NotesView() {
               <p className="text-muted-foreground">Loading notes...</p>
             </div>
           ) : notes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 space-y-4">
-              <p className="text-muted-foreground">No notes found</p>
-              <Button onClick={() => router.push('/notes/new')}>
-                Create your first note
-              </Button>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="No notes found"
+              description="Start creating notes to organize your knowledge"
+              action={{
+                label: "Create your first note",
+                onClick: () => router.push('/notes/new')
+              }}
+            />
           ) : viewMode === 'compact' ? (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">

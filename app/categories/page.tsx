@@ -206,6 +206,8 @@ export default function CategoriesPage() {
         <AppHeader 
           title="Manage Categories" 
           showSearch={true}
+          showThemeToggle={true}
+          showLogout={true}
           onSearch={() => setShowSearch(true)}
         />
         <div className="flex-1 overflow-auto p-6">

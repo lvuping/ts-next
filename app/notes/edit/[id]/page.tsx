@@ -373,6 +373,8 @@ export default function EditNotePage({ params }: Props) {
         <AppHeader 
           title="Edit Note" 
           showSearch={true}
+          showThemeToggle={true}
+          showLogout={true}
           onSearch={() => setShowSearch(true)}
           subtitle={
             <Button

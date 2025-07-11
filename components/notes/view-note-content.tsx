@@ -149,6 +149,8 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
       <AppHeader 
         title="View Note" 
         showSearch={true}
+        showThemeToggle={true}
+        showLogout={true}
         onSearch={() => setShowSearch(true)}
         subtitle={
           <Link href={`/notes/edit/${note.id}`}>

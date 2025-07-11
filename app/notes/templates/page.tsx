@@ -236,6 +236,8 @@ jobs:
         <AppHeader 
           title="Code Templates" 
           showSearch={true}
+          showThemeToggle={true}
+          showLogout={true}
           onSearch={() => setShowSearch(true)}
         />
 

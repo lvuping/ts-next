@@ -15,6 +15,7 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useLanguage } from '@/contexts/language-context';
 import dynamic from 'next/dynamic';
 import { useGlobalSearch } from '@/hooks/use-global-search';
+import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ const LANGUAGES = [
 export default function NewNotePage() {
   const router = useRouter();
   const { language } = useLanguage();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tagInput, setTagInput] = useState('');
@@ -174,7 +176,14 @@ export default function NewNotePage() {
       }
 
       const note = await response.json();
-      router.push(`/notes/edit/${note.id}`);
+      
+      // Show success toast
+      toast({
+        title: 'Success',
+        description: 'Note created successfully!',
+      });
+      
+      router.push(`/notes/view/${note.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -340,6 +349,8 @@ export default function NewNotePage() {
         <AppHeader 
           title="Create New Note" 
           showSearch={true}
+          showThemeToggle={true}
+          showLogout={true}
           onSearch={() => setShowSearch(true)}
         />
 

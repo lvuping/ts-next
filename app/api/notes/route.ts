@@ -1,78 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
+import { createAuthenticatedHandler, parseRequestBody } from '@/lib/api-handler';
 import { getAllNotes, createNote, importNotes, exportNotesToMarkdown } from '@/lib/notes';
 import type { NoteInput } from '@/types/note';
 
-export async function GET(request: NextRequest) {
-  try {
-    if (!await isAuthenticated()) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = createAuthenticatedHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url);
+  const filters = {
+    search: searchParams.get('search') || undefined,
+    category: searchParams.get('category') || undefined,
+    tag: searchParams.get('tag') || undefined,
+    favorite: searchParams.get('favorite') === 'true' ? true : undefined,
+  };
 
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search') || undefined;
-    const category = searchParams.get('category') || undefined;
-    const tag = searchParams.get('tag') || undefined;
-    const favorite = searchParams.get('favorite') === 'true' ? true : undefined;
+  const notes = await getAllNotes(filters);
+  return notes;
+});
 
-    const notes = await getAllNotes({ search, category, tag, favorite });
-    return NextResponse.json(notes);
-  } catch (error) {
-    console.error('Error fetching notes:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch notes' },
-      { status: 500 }
-    );
+export const POST = createAuthenticatedHandler(async (request: NextRequest) => {
+  const contentType = request.headers.get('content-type') || '';
+  
+  // Handle import
+  if (contentType.includes('text/markdown')) {
+    const markdownContent = await request.text();
+    const result = await importNotes(markdownContent);
+    return result;
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    if (!await isAuthenticated()) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const contentType = request.headers.get('content-type') || '';
-    
-    // Handle import
-    if (contentType.includes('text/markdown')) {
-      const markdownContent = await request.text();
-      const result = await importNotes(markdownContent);
-      return NextResponse.json(result);
-    }
-
-    // Handle normal note creation
-    const body: NoteInput = await request.json();
-    
-    // Validate required fields
-    if (!body.title || !body.content || !body.language || !body.category) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    const note = await createNote(body);
-    return NextResponse.json(note, { status: 201 });
-  } catch (error) {
-    console.error('Error creating note:', error);
-    return NextResponse.json(
-      { error: 'Failed to create note' },
-      { status: 500 }
-    );
+  // Handle normal note creation
+  const body = await parseRequestBody<NoteInput>(request);
+  
+  // Validate required fields
+  if (!body.title || !body.content || !body.language || !body.category) {
+    throw new Error('Missing required fields');
   }
-}
 
-// Export notes endpoint
+  const note = await createNote(body);
+  return note;
+});
+
+// Export notes endpoint - handle manually due to special response type
 export async function PUT(request: NextRequest) {
   try {
-    if (!await isAuthenticated()) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const handler = createAuthenticatedHandler(async (req: NextRequest) => {
+      const { noteIds } = await parseRequestBody<{ noteIds: string[] }>(req);
+      
+      // Fetch the notes based on IDs
+      const allNotes = await getAllNotes({});
+      const notesToExport = noteIds.length > 0 
+        ? allNotes.filter(note => noteIds.includes(note.id))
+        : allNotes;
+      
+      const markdown = exportNotesToMarkdown(notesToExport);
+      return markdown;
+    });
+
+    // Call the handler to get authentication and error handling
+    const authResponse = await handler(request);
+    
+    // Check if it's an error response
+    if (authResponse.status !== 200) {
+      return authResponse;
     }
 
-    const { noteIds } = await request.json();
-    const markdown = await exportNotesToMarkdown(noteIds);
+    // Extract the markdown content
+    const markdown = await authResponse.json();
     
+    // Return as markdown file
     return new NextResponse(markdown, {
       headers: {
         'Content-Type': 'text/markdown',

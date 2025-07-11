@@ -1,16 +1,10 @@
 ## Todo list
 
-0. 아래 요구사항을 성능과 코드유지보를 고려해서 수정해줘. 
-1. 요약하기 기능을 사용하고 새로고침하면 해당 내용이 삭제 되는데, 저장하도록 해줘. Database 에 필드를 만들어서 저장해야할 것으로 보여져. 
+1. 모든 페이지에서 Search function 이 동작중인데, Command Space 를 누르면 트리거가 되도록 해줘(Windows 의 경우는 Alt+Space). 지금은 Control + anykey 를 누르면 계속 켜져서, Control + V 같은 붙여넣기 기능이 동작하지 않아. 
 
-2. 상단에서 언어 설정을 할 수 있도록 해주고, 해당 언어를 기반으로 API 응답을 받아 정리할 수 있도록 해줘.(현재 요약하기 기능은 언제나 영어로 작성되고 있어.) 
+2. Content View 모드일 때 Markdown 랜더링을 제대로 표현할 수 있도록 해줘. 현재는 표현이 잘 안되고 있어. 다른 노트앱들은 어떻게 Markdown 을 랜더링 해주는지, (ex: obsidian) 파악후 수정해줘.  Mermaid diagram 포함되도록 해줘. 
 
-3. 모바일뷰도 지원하도록 해줘. 현재 모바일뷰에서 좌측의 패널을 볼 수가 없어. 홈으로 가는게 어려운 상황 
-
-4. 모든 페이지에서 Search function 이 동작하도록 해줘 ( 아이콘, 단축키) 
-
-5. Content View 모드일 때 Markdown 랜더링을 제대로 표현할 수 있도록 해줘. Mermaid diagram 포함
-
+3. 처음 노트를 만들때, Create note 를 누른후 또 다시 save changes 항목으로 가는건 이상해. 수정해줘. 
 
 ** AI 기능 확장**
 ## Gemini API
