@@ -2,16 +2,22 @@
 
 ```yaml
 - complementary:
+  - link "PKM":
+    - /url: /
+    - heading "PKM" [level=1]
+  - button "Hide sidebar"
   - link "New Note":
     - /url: /notes/new
     - button "New Note"
-  - searchbox "Search notes..."
   - button "All Notes"
   - button "Favorites"
   - link "Templates":
     - /url: /notes/templates
     - button "Templates"
   - heading "Categories" [level=3]
+  - link:
+    - /url: /categories
+    - button
   - button "Frontend"
   - button "Backend"
   - button "Database"
@@ -19,18 +25,282 @@
   - button "Security"
   - button "Other"
   - heading "Tags" [level=3]
-  - text: api github-action react-component template test
+  - text: api docker-compose github-action react-component template test
 - main:
   - heading "Notes PKM" [level=1]
   - button "Search notes (Double tap Control)"
   - button
   - button "Toggle theme"
   - button
-  - paragraph: 84 notes found
+  - paragraph: 128 notes found
   - group:
     - radio "Detailed view"
     - radio "Card view" [checked]
     - radio "Compact view"
+  - link "Edited Note":
+    - /url: /notes/view/1752162032384-6cvaqoud2
+  - text: 7/11/2025, 12:40:32 AM
+  - button
+  - button
+  - text: javascript Other
+  - link "API Test Note":
+    - /url: /notes/view/1752162018402-uq13qy8e8
+  - text: 7/11/2025, 12:40:18 AM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "Note to Favorite":
+    - /url: /notes/view/1752162018199-xbf30c3rf
+  - text: 7/11/2025, 12:40:18 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Updated Note":
+    - /url: /notes/view/1752162018153-4fa9hbzhx
+  - text: 7/11/2025, 12:40:18 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Get":
+    - /url: /notes/view/1752162018138-inavzommr
+  - text: 7/11/2025, 12:40:18 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Edited Note":
+    - /url: /notes/view/1752162013318-ipcyr9quw
+  - text: 7/11/2025, 12:40:13 AM
+  - button
+  - button
+  - text: javascript Other
+  - link "Note to Favorite":
+    - /url: /notes/view/1752161994723-suu3ci5bg
+  - text: 7/11/2025, 12:39:54 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Updated Note":
+    - /url: /notes/view/1752161994692-pern5xr6g
+  - text: 7/11/2025, 12:39:54 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Get":
+    - /url: /notes/view/1752161994682-jsdhybg1x
+  - text: 7/11/2025, 12:39:54 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "API Test Note":
+    - /url: /notes/view/1752161994667-583irww2i
+  - text: 7/11/2025, 12:39:54 AM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "Edited Note":
+    - /url: /notes/view/1752161991178-wxyk38kqk
+  - text: 7/11/2025, 12:39:51 AM
+  - button
+  - button
+  - text: javascript Other
+  - link "Updated Note":
+    - /url: /notes/view/1752161987508-sw2gni810
+  - text: 7/11/2025, 12:39:47 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Favorite":
+    - /url: /notes/view/1752161987499-l58fb39dw
+  - text: 7/11/2025, 12:39:47 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "API Test Note":
+    - /url: /notes/view/1752161987494-m781pbwd5
+  - text: 7/11/2025, 12:39:47 AM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "Note to Get":
+    - /url: /notes/view/1752161987490-zxrupevc2
+  - text: 7/11/2025, 12:39:47 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "신규노트":
+    - /url: /notes/view/1752161291220-3a0q5iejw
+  - text: 7/11/2025, 12:28:11 AM
+  - button
+  - button
+  - text: javascript Other
+  - link "Note to Favorite":
+    - /url: /notes/view/1752159710103-t3s91blyw
+  - text: 7/11/2025, 12:01:50 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "API Test Note":
+    - /url: /notes/view/1752159710093-mksgecgfl
+  - text: 7/11/2025, 12:01:50 AM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "Updated Note":
+    - /url: /notes/view/1752159710089-4vdnnqkmt
+  - text: 7/11/2025, 12:01:50 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Get":
+    - /url: /notes/view/1752159710072-q8vyd1aj6
+  - text: 7/11/2025, 12:01:50 AM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Favorite":
+    - /url: /notes/view/1752157504786-3tgilgean
+  - text: 7/10/2025, 11:25:04 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Updated Note":
+    - /url: /notes/view/1752157504776-foq1560xc
+  - text: 7/10/2025, 11:25:04 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "API Test Note":
+    - /url: /notes/view/1752157504767-4z9e6e6jv
+  - text: 7/10/2025, 11:25:04 PM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "Note to Get":
+    - /url: /notes/view/1752157504759-k7faiff7f
+  - text: 7/10/2025, 11:25:04 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "New React Component":
+    - /url: /notes/view/1752156521003-v4433x3so
+  - text: 7/10/2025, 11:08:41 PM
+  - button
+  - button
+  - text: typescript Frontend template react-component
+  - link "New Docker Compose":
+    - /url: /notes/view/1752153720637-6zljx98yl
+  - text: 7/10/2025, 10:22:00 PM
+  - button
+  - button
+  - text: yaml DevOps template docker-compose
+  - link "Note to Favorite":
+    - /url: /notes/view/1752153553873-8jxmy56pq
+  - text: 7/10/2025, 10:19:13 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Updated Note":
+    - /url: /notes/view/1752153553494-fthosb1ws
+  - text: 7/10/2025, 10:19:13 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "API Test Note":
+    - /url: /notes/view/1752153553477-kkykbfx9l
+  - text: 7/10/2025, 10:19:13 PM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "Note to Get":
+    - /url: /notes/view/1752153553469-csosljp3i
+  - text: 7/10/2025, 10:19:13 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Favorite":
+    - /url: /notes/view/1752153553264-w2l4m4uds
+  - text: 7/10/2025, 10:19:13 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Favorite":
+    - /url: /notes/view/1752153552995-n6e065txf
+  - text: 7/10/2025, 10:19:13 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Updated Note":
+    - /url: /notes/view/1752153552974-zzhim062r
+  - text: 7/10/2025, 10:19:13 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Updated Note":
+    - /url: /notes/view/1752153552967-r9d7ilp4n
+  - text: 7/10/2025, 10:19:12 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Get":
+    - /url: /notes/view/1752153552667-xusoszv5h
+  - text: 7/10/2025, 10:19:12 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "API Test Note":
+    - /url: /notes/view/1752153552638-6kw59vt28
+  - text: 7/10/2025, 10:19:12 PM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "API Test Note":
+    - /url: /notes/view/1752153552634-li7ug0dkn
+  - text: 7/10/2025, 10:19:12 PM
+  - button
+  - button
+  - text: javascript Backend api test
+  - link "Note to Get":
+    - /url: /notes/view/1752153552480-kmozpsvfd
+  - text: 7/10/2025, 10:19:12 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Test Note":
+    - /url: /notes/view/1752153317506-9gpai7vib
+  - text: 7/10/2025, 10:15:17 PM
+  - button
+  - button
+  - text: javascript Frontend test
+  - link "Edited Note":
+    - /url: /notes/view/1752153317271-5lu0ldf25
+  - text: 7/10/2025, 10:15:17 PM
+  - button
+  - button
+  - text: javascript Other
+  - link "Note to Favorite":
+    - /url: /notes/view/1752153299987-lbpiz2och
+  - text: 7/10/2025, 10:14:59 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Updated Note":
+    - /url: /notes/view/1752153299938-0g44f3kn9
+  - text: 7/10/2025, 10:14:59 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "Note to Get":
+    - /url: /notes/view/1752153299921-57h7dnjox
+  - text: 7/10/2025, 10:14:59 PM
+  - button
+  - button
+  - text: javascript Backend
+  - link "API Test Note":
+    - /url: /notes/view/1752153299897-gcl4uanv0
+  - text: 7/10/2025, 10:14:59 PM
+  - button
+  - button
+  - text: javascript Backend api test
   - link "Edited Note":
     - /url: /notes/view/1752153297620-ma0x73vqz
   - text: 7/10/2025, 10:14:57 PM
@@ -538,9 +808,4 @@
 - region "Notifications (F8)":
   - list
 - alert
-- button "Open Next.js Dev Tools":
-  - img
-- button "Open issues overlay": 1 Issue
-- button "Collapse issues badge":
-  - img
 ```

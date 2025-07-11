@@ -323,14 +323,26 @@ export async function deleteNote(id: string): Promise<boolean> {
 
 export async function toggleFavorite(id: string): Promise<Note | null> {
   const db = initDb();
-  const existing = await getNoteById(id);
   
-  if (!existing) return null;
-  
-  db.prepare('UPDATE notes SET favorite = ?, updated_at = ? WHERE id = ?')
-    .run(existing.favorite ? 0 : 1, new Date().toISOString(), id);
-  
-  return getNoteById(id);
+  try {
+    // Use a transaction to ensure atomicity
+    const result = db.transaction(() => {
+      const existing = db.prepare('SELECT * FROM notes WHERE id = ?').get(id) as NoteRow | undefined;
+      
+      if (!existing) return null;
+      
+      const newFavoriteValue = existing.favorite ? 0 : 1;
+      db.prepare('UPDATE notes SET favorite = ?, updated_at = ? WHERE id = ?')
+        .run(newFavoriteValue, new Date().toISOString(), id);
+      
+      return getNoteById(id);
+    })();
+    
+    return result;
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    throw error;
+  }
 }
 
 export async function getCategories(): Promise<Array<{ id: number; name: string; color: string; icon: string; position: number }>> {

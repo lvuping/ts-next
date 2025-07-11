@@ -1,0 +1,52 @@
+# Page snapshot
+
+```yaml
+- complementary:
+  - link "PKM":
+    - /url: /
+    - heading "PKM" [level=1]
+  - button "Hide sidebar"
+  - link "New Note":
+    - /url: /notes/new
+    - button "New Note"
+  - button "All Notes"
+  - button "Favorites"
+  - link "Templates":
+    - /url: /notes/templates
+    - button "Templates"
+  - heading "Categories" [level=3]
+  - link:
+    - /url: /categories
+    - button
+  - button "Frontend"
+  - button "Backend"
+  - button "Database"
+  - button "DevOps"
+  - button "Security"
+  - button "Other"
+  - heading "Tags" [level=3]
+  - text: api docker-compose github-action react-component template test
+- main:
+  - heading "Create New Note" [level=1]
+  - main:
+    - text: Note Details Create a new code snippet or technical note Title *
+    - textbox "Title *": Test Note
+    - text: Language *
+    - combobox "Language *": javascript
+    - text: Category *
+    - combobox "Category *": Frontend
+    - text: AI Assistant
+    - textbox "Describe how to modify the code..."
+    - button "Assist" [disabled]
+    - text: Code Content *
+    - textbox "Code Content *": console.log("Hello, World!");
+    - text: Tags
+    - textbox "Tags"
+    - text: test
+    - button
+    - button "Create Note"
+    - button "Cancel"
+- region "Notifications (F8)":
+  - list
+- alert
+```

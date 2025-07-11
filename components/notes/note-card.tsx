@@ -46,7 +46,12 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
     }
   }, [note.id, onDelete]);
 
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
   const handleToggleFavorite = useCallback(async () => {
+    if (isTogglingFavorite) return; // Prevent multiple clicks
+    
+    setIsTogglingFavorite(true);
     try {
       const response = await fetch(`/api/notes/${note.id}/favorite`, {
         method: 'POST',
@@ -54,11 +59,16 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
       
       if (response.ok && onToggleFavorite) {
         onToggleFavorite(note.id);
+      } else {
+        // Revert optimistic update if failed
+        console.error('Failed to toggle favorite status');
       }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
+    } finally {
+      setIsTogglingFavorite(false);
     }
-  }, [note.id, onToggleFavorite]);
+  }, [note.id, onToggleFavorite, isTogglingFavorite]);
 
   const handleCopyContent = useCallback(async () => {
     try {
@@ -113,7 +123,8 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
               size="sm"
               variant="ghost"
               onClick={handleToggleFavorite}
-              className={note.favorite ? 'text-red-500' : ''}
+              disabled={isTogglingFavorite}
+              className={`${note.favorite ? 'text-red-500' : ''} ${isTogglingFavorite ? 'opacity-50' : ''}`}
             >
               <Heart className={`h-4 w-4 ${note.favorite ? 'fill-current' : ''}`} />
             </Button>
@@ -170,7 +181,8 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
               size="sm"
               variant="ghost"
               onClick={handleToggleFavorite}
-              className={note.favorite ? 'text-red-500' : ''}
+              disabled={isTogglingFavorite}
+              className={`${note.favorite ? 'text-red-500' : ''} ${isTogglingFavorite ? 'opacity-50' : ''}`}
             >
               <Heart className={`h-4 w-4 ${note.favorite ? 'fill-current' : ''}`} />
             </Button>

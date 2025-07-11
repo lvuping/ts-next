@@ -3,6 +3,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeSnippet } from './code-snippet';
+import '@/styles/markdown.css';
 
 interface MarkdownPreviewProps {
   content: string;
@@ -11,7 +12,7 @@ interface MarkdownPreviewProps {
 
 export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
   return (
-    <div className={`prose prose-slate dark:prose-invert max-w-none ${className}`}>
+    <div className={`markdown-renderer ${className || ''}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -21,7 +22,7 @@ export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
             
             if (inline) {
               return (
-                <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...props}>
+                <code className="inline-code" {...props}>
                   {children}
                 </code>
               );

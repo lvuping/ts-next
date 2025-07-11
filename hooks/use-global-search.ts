@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useKeyboardShortcuts } from './use-keyboard-shortcuts';
+import { useDoubleKeyPress } from './use-double-key-press';
 
 export function useGlobalSearch() {
   const [showSearch, setShowSearch] = useState(false);
@@ -36,6 +37,13 @@ export function useGlobalSearch() {
       }
     }
   ]);
+
+  // Double Control key press to open search
+  useDoubleKeyPress({
+    key: 'control',
+    timeout: 300,
+    handler: () => setShowSearch(true)
+  });
 
   return { showSearch, setShowSearch };
 }
