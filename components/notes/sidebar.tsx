@@ -158,12 +158,10 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
                 className="w-full justify-start"
                 onClick={() => handleCategoryClick(category.name)}
               >
-                <div 
-                  className="h-4 w-4 mr-2 rounded flex items-center justify-center"
-                  style={{ backgroundColor: category.color }}
-                >
-                  <Icon className="h-3 w-3 text-white" />
-                </div>
+                <Icon 
+                  className="h-4 w-4 mr-2" 
+                  style={{ color: category.color }}
+                />
                 {category.name}
               </Button>
             );

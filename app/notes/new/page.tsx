@@ -266,7 +266,7 @@ export default function NewNotePage() {
         </header>
 
         <main className="flex-1 overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="max-w-7xl mx-auto h-full flex flex-col">
+        <div className="max-w-7xl mx-auto h-full">
             <form onSubmit={handleSubmit} className="flex flex-col h-full">
               {/* Title Section */}
               <div className="px-8 pt-6 pb-3">
@@ -359,23 +359,21 @@ export default function NewNotePage() {
               </div>
 
               {/* Content Editor */}
-              <div className="flex-1 px-8 pb-6 min-h-[500px]">
-                <div className="space-y-2">
+              <div className="flex-1 px-8 pb-6">
+                <div className="h-full flex flex-col space-y-2" style={{ minHeight: 'calc(100vh - 400px)' }}>
                   <div className="flex items-center gap-2 px-1">
                     <span className="text-sm font-medium text-muted-foreground">Content</span>
                     <div className="flex-1 h-px bg-border/50"></div>
                   </div>
-                  <div className="h-full bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
-                    <div className="h-full p-1">
+                  <div className="flex-1 bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
                     <Textarea
                       id="content"
                       value={formData.content}
                       onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                       placeholder="Start writing your code or notes..."
-                      className="h-full w-full font-mono text-base leading-relaxed resize-none border-0 bg-transparent p-6 focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/40 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+                      className="h-full w-full min-h-[600px] font-mono text-base leading-relaxed resize-none border-0 bg-transparent p-6 focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/40 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
                       required
                     />
-                    </div>
                   </div>
                 </div>
               </div>
