@@ -335,15 +335,15 @@ export default function EditNotePage({ params }: Props) {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-1 space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="language">Language *</Label>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex-1 min-w-[150px] max-w-[200px]">
+                        <Label htmlFor="language" className="text-sm">Language *</Label>
                         <Select
                           value={formData.language}
                           onValueChange={(value) => setFormData({ ...formData, language: value })}
                         >
-                          <SelectTrigger id="language">
+                          <SelectTrigger id="language" className="h-9 mt-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -356,13 +356,13 @@ export default function EditNotePage({ params }: Props) {
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="category">Category *</Label>
+                      <div className="flex-1 min-w-[150px] max-w-[200px]">
+                        <Label htmlFor="category" className="text-sm">Category *</Label>
                         <Select
                           value={formData.category}
                           onValueChange={(value) => setFormData({ ...formData, category: value })}
                         >
-                          <SelectTrigger id="category">
+                          <SelectTrigger id="category" className="h-9 mt-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -376,7 +376,7 @@ export default function EditNotePage({ params }: Props) {
                       </div>
                     </div>
 
-                    <div className="md:col-span-2 space-y-2">
+                    <div className="space-y-2">
                       <Label htmlFor="content">Content *</Label>
                       <Textarea
                         id="content"
