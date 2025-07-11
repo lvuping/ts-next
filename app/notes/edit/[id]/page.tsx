@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -260,184 +259,169 @@ export default function EditNotePage({ params }: Props) {
 
   return (
     <AppLayout categories={categories} tags={tags}>
-      <div className="min-h-screen bg-background">
-        <header className="border-b p-4 md:p-6">
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Edit Note</h1>
             <Button
-              variant="destructive"
+              variant="ghost"
               size="sm"
               onClick={() => setShowDeleteDialog(true)}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </header>
 
-        <main className="container max-w-6xl mx-auto p-4 md:p-6">
-        <Tabs defaultValue="edit" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="edit">
-              <Code className="h-4 w-4 mr-2" />
-              Edit
-            </TabsTrigger>
-            <TabsTrigger value="preview">
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </TabsTrigger>
-          </TabsList>
+        <main className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="max-w-5xl mx-auto w-full">
+          <Tabs defaultValue="edit" className="space-y-4">
+            <TabsList className="bg-accent/30">
+              <TabsTrigger value="edit">
+                <Code className="h-4 w-4 mr-2" />
+                Edit
+              </TabsTrigger>
+              <TabsTrigger value="preview">
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="edit">
-            <Card>
-              <CardHeader>
-                <CardTitle>Note Details</CardTitle>
-                <CardDescription>
-                  Edit your note
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Title *</Label>
+            <TabsContent value="edit" className="mt-0">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Note title"
+                    className="text-lg font-medium border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
+                    required
+                  />
+                </div>
+
+                <div className="bg-accent/30 rounded-lg p-3">
+                  <div className="flex gap-2">
                     <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Enter note title"
-                      required
+                      value={assistPrompt}
+                      onChange={(e) => setAssistPrompt(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAssist();
+                        }
+                      }}
+                      placeholder="Ask AI to help write or modify code..."
+                      className="bg-background/60 border-0 placeholder:text-muted-foreground/60"
+                      disabled={assistLoading}
                     />
+                    <Button
+                      type="button"
+                      onClick={handleAssist}
+                      disabled={assistLoading || !assistPrompt.trim()}
+                      size="sm"
+                      className="px-4"
+                    >
+                      <Wand2 className="h-4 w-4" />
+                      {assistLoading ? '' : ''}
+                    </Button>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>AI Assistant</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={assistPrompt}
-                        onChange={(e) => setAssistPrompt(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAssist();
-                          }
-                        }}
-                        placeholder="Describe how to modify the code..."
-                        disabled={assistLoading}
-                      />
-                      <Button
-                        type="button"
-                        onClick={handleAssist}
-                        disabled={assistLoading || !assistPrompt.trim()}
-                      >
-                        <Wand2 className="h-4 w-4 mr-2" />
-                        {assistLoading ? 'Processing...' : 'Assist'}
-                      </Button>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.language}
+                    onValueChange={(value) => setFormData({ ...formData, language: value })}
+                  >
+                    <SelectTrigger id="language" className="w-[140px] h-9">
+                      <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang} value={lang}>
+                          {lang}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  >
+                    <SelectTrigger id="category" className="w-[140px] h-9">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex-1">
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="Start writing your code or notes..."
+                    className="font-mono min-h-[450px] resize-none border-0 bg-accent/10 focus-visible:ring-1 focus-visible:ring-primary/20"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Input
+                    id="tags"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleAddTag}
+                    placeholder="Add tags (press Enter)"
+                    className="h-9"
+                  />
+                  {formData.tags && formData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
                     </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-4">
-                      <div className="flex-1 min-w-[150px] max-w-[200px]">
-                        <Label htmlFor="language" className="text-sm">Language *</Label>
-                        <Select
-                          value={formData.language}
-                          onValueChange={(value) => setFormData({ ...formData, language: value })}
-                        >
-                          <SelectTrigger id="language" className="h-9 mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {LANGUAGES.map((lang) => (
-                              <SelectItem key={lang} value={lang}>
-                                {lang}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex-1 min-w-[150px] max-w-[200px]">
-                        <Label htmlFor="category" className="text-sm">Category *</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) => setFormData({ ...formData, category: value })}
-                        >
-                          <SelectTrigger id="category" className="h-9 mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.name}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="content">Content *</Label>
-                      <Textarea
-                        id="content"
-                        value={formData.content}
-                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                        placeholder="Enter your content here..."
-                        className="font-mono min-h-[400px]"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="tags">Tags</Label>
-                    <Input
-                      id="tags"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleAddTag}
-                      placeholder="Type tag and press Enter"
-                    />
-                    {formData.tags && formData.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary">
-                            {tag}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 hover:text-destructive"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  )}
+                </div>
 
                   {error && (
                     <div className="text-sm text-destructive">{error}</div>
                   )}
 
-                  <div className="flex gap-4">
-                    <Button type="submit" disabled={saving}>
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => router.push('/')}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button type="submit" disabled={saving} size="sm">
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push('/')}
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </TabsContent>
 
-          <TabsContent value="preview">
+            <TabsContent value="preview" className="mt-0">
             <Card>
               <CardHeader>
                 <CardTitle>{formData.title || 'Untitled'}</CardTitle>
@@ -469,7 +453,8 @@ export default function EditNotePage({ params }: Props) {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
         </main>
       </div>
 

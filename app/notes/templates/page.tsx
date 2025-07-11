@@ -15,6 +15,8 @@ export default function TemplatesPage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<NoteTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
+  const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
     fetchTemplates();
@@ -24,6 +26,9 @@ export default function TemplatesPage() {
     try {
       const response = await fetch('/api/notes/metadata');
       if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories);
+        setTags(data.tags);
         // Get templates from the initial data
         const templatesData: NoteTemplate[] = [
           {
@@ -199,9 +204,9 @@ jobs:
   };
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-background">
-        <header className="border-b p-4 md:p-6">
+    <AppLayout categories={categories} tags={tags}>
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="border-b px-6 py-4 flex-shrink-0">
           <div className="flex items-center gap-4">
             <Link href="/">
               <Button variant="ghost" size="icon">
@@ -212,7 +217,8 @@ jobs:
           </div>
         </header>
 
-        <main className="container max-w-6xl mx-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="max-w-6xl mx-auto">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <p className="text-muted-foreground">Loading templates...</p>
@@ -256,6 +262,7 @@ jobs:
               ))}
             </div>
           )}
+          </div>
         </main>
       </div>
     </AppLayout>

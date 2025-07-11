@@ -86,7 +86,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
   };
 
   const SidebarContent = () => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header with PKM and hide button */}
       <div className="group flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
@@ -198,7 +198,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
             <Menu className="h-4 w-4" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-80">
+        <SheetContent side="left" className="w-64">
           <SidebarContent />
         </SheetContent>
       </Sheet>
@@ -206,7 +206,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
   }
 
   return (
-    <aside className={`w-80 p-6 overflow-y-auto ${className}`}>
+    <aside className={`w-64 p-4 overflow-y-auto ${className}`}>
       <SidebarContent />
     </aside>
   );
