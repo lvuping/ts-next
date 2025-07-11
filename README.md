@@ -24,17 +24,22 @@ A modern, feature-rich note-taking application built with Next.js 15, designed s
 - **🤖 AI Assistant**: Powered by Google Gemini for code suggestions and modifications
 - **📝 Markdown Support**: Preview notes with markdown formatting
 - **🔐 Password Protection**: Simple authentication system
+- **🎨 Unified UI/UX**: Consistent layout between note creation and viewing modes
+- **📐 Optimized Editor**: Large content area with best practices for note-taking apps
+- **🗂️ Category Management**: Customizable categories with icons and colors
 
 ## 🛠️ Tech Stack
 
 - **Framework**: Next.js 15 with App Router
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **Language**: TypeScript
-- **Data Storage**: File-based JSON storage with lock mechanism
+- **Database**: SQLite with better-sqlite3
+- **Data Storage**: SQLite database + JSON file backup
 - **Syntax Highlighting**: Shiki
 - **Search**: Fuse.js for fuzzy search
 - **Theme**: next-themes for dark mode support
 - **Testing**: Playwright for E2E tests
+- **AI Integration**: Google Gemini API
 
 ## 📦 Installation
 
@@ -130,26 +135,79 @@ Edit the `LANGUAGES` array in:
 - `/app/notes/new/page.tsx`
 - `/app/notes/edit/[id]/page.tsx`
 
-### Adding Categories
-Categories are stored in the data file and can be modified through the API.
+### Managing Categories
+1. Navigate to `/categories` or click the settings icon in the sidebar
+2. Create new categories with custom names, colors, and icons
+3. Edit existing categories to change their appearance
+4. Categories are now stored in SQLite database for better performance
 
 ### Themes
 The app uses CSS variables for theming. Modify `/app/globals.css` to customize colors.
 
+## 🎯 Recent Updates (December 2024)
+
+- ✅ Unified layout between note creation and viewing modes
+- ✅ Expanded content editor with improved UX (600px minimum height)
+- ✅ Category icons now follow Shadcn design system
+- ✅ SQLite database integration for better performance
+- ✅ Enhanced AI assistant with code diff viewer
+- ✅ Improved responsive design for mobile devices
+
 ## 📈 Future Improvements
 
-- [ ] Database integration (PostgreSQL/SQLite)
 - [ ] User accounts with multi-user support
-- [ ] Note sharing and collaboration
-- [ ] Export to various formats (PDF, Markdown, etc.)
-- [ ] Version history for notes
+- [ ] Note sharing and collaboration features
+- [ ] Export to various formats (PDF, Markdown, JSON, etc.)
+- [ ] Version history and revision tracking
 - [ ] Code execution sandbox
 - [ ] Browser extension for quick capture
-- [ ] Mobile app
+- [ ] Mobile app (React Native)
+- [ ] Real-time collaboration
+- [ ] Integration with GitHub Gists
+- [ ] Backup and sync to cloud services
+- [ ] Code snippet marketplace
+- [ ] Enhanced AI features (auto-tagging, smart categorization)
+- [ ] Performance optimization with virtual scrolling
+- [ ] Offline support with PWA
+
+## 🚀 Performance
+
+- Fast page loads with Next.js optimizations
+- SQLite database for efficient data queries
+- Lazy loading for code syntax highlighting
+- Optimized bundle size with dynamic imports
+- Production build serves static assets efficiently
+
+## 🔧 Development
+
+### Project Structure
+```
+├── app/              # Next.js app router pages
+├── components/       # React components
+│   ├── layout/      # Layout components
+│   ├── notes/       # Note-specific components
+│   └── ui/          # shadcn/ui components
+├── lib/             # Utility functions and database
+├── types/           # TypeScript type definitions
+└── public/          # Static assets
+```
+
+### Best Practices
+- Follow TypeScript strict mode
+- Use ESLint and Prettier for code formatting
+- Write tests for new features
+- Keep components small and focused
+- Use server components where possible
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📜 License
 
