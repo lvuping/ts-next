@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { isAuthenticated } from '@/lib/auth';
 import { env } from '@/lib/env';
 
@@ -25,12 +25,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: modelName || 'gemini-2.0-flash-exp' });
+    const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
-    const result = await model.generateContent(contents);
-    const response = await result.response;
-    const text = response.text();
+    const response = await ai.models.generateContent({
+      model: modelName || 'gemini-2.5-flash',
+      contents: contents
+    });
+    const text = response.text;
 
     return NextResponse.json({ text });
   } catch (error) {
