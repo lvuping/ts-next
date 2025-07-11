@@ -19,9 +19,9 @@ import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
 
 const LANGUAGES = [
-  'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 'go', 'rust',
-  'php', 'ruby', 'swift', 'kotlin', 'sql', 'html', 'css', 'scss', 'json',
-  'yaml', 'xml', 'markdown', 'bash', 'shell', 'plaintext'
+  'plaintext', 'abap', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 
+  'go', 'rust', 'php', 'ruby', 'swift', 'kotlin', 'sql', 'html', 'css', 'scss', 
+  'json', 'yaml', 'xml', 'markdown', 'bash', 'shell'
 ];
 
 interface Props {
@@ -45,7 +45,7 @@ export default function EditNotePage({ params }: Props) {
   const [formData, setFormData] = useState<Partial<NoteInput>>({
     title: '',
     content: '',
-    language: 'javascript',
+    language: 'plaintext',
     category: 'Other',
     tags: [],
     favorite: false,
@@ -293,7 +293,7 @@ export default function EditNotePage({ params }: Props) {
               <CardHeader>
                 <CardTitle>Note Details</CardTitle>
                 <CardDescription>
-                  Edit your code snippet or technical note
+                  Edit your note
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -307,46 +307,6 @@ export default function EditNotePage({ params }: Props) {
                       placeholder="Enter note title"
                       required
                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="language">Language *</Label>
-                      <Select
-                        value={formData.language}
-                        onValueChange={(value) => setFormData({ ...formData, language: value })}
-                      >
-                        <SelectTrigger id="language">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {LANGUAGES.map((lang) => (
-                            <SelectItem key={lang} value={lang}>
-                              {lang}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category *</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      >
-                        <SelectTrigger id="category">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.name}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -375,16 +335,58 @@ export default function EditNotePage({ params }: Props) {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="content">Code Content *</Label>
-                    <Textarea
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="Paste your code here..."
-                      className="font-mono min-h-[400px]"
-                      required
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1 space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="language">Language *</Label>
+                        <Select
+                          value={formData.language}
+                          onValueChange={(value) => setFormData({ ...formData, language: value })}
+                        >
+                          <SelectTrigger id="language">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {LANGUAGES.map((lang) => (
+                              <SelectItem key={lang} value={lang}>
+                                {lang}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Category *</Label>
+                        <Select
+                          value={formData.category}
+                          onValueChange={(value) => setFormData({ ...formData, category: value })}
+                        >
+                          <SelectTrigger id="category">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.name}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 space-y-2">
+                      <Label htmlFor="content">Content *</Label>
+                      <Textarea
+                        id="content"
+                        value={formData.content}
+                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                        placeholder="Enter your content here..."
+                        className="font-mono min-h-[400px]"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">

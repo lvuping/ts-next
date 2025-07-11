@@ -13,11 +13,19 @@ import { X, Wand2 } from 'lucide-react';
 import { NoteInput } from '@/types/note';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const LANGUAGES = [
-  'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 'go', 'rust',
-  'php', 'ruby', 'swift', 'kotlin', 'sql', 'html', 'css', 'scss', 'json',
-  'yaml', 'xml', 'markdown', 'bash', 'shell', 'plaintext'
+  'plaintext', 'abap', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 
+  'go', 'rust', 'php', 'ruby', 'swift', 'kotlin', 'sql', 'html', 'css', 'scss', 
+  'json', 'yaml', 'xml', 'markdown', 'bash', 'shell'
 ];
 
 export default function NewNotePage() {
@@ -29,20 +37,96 @@ export default function NewNotePage() {
   const [assistLoading, setAssistLoading] = useState(false);
   const [showDiffViewer, setShowDiffViewer] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('');
+  const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
+  const [suggestedLanguage, setSuggestedLanguage] = useState('');
+  const [suggestedCategory, setSuggestedCategory] = useState('');
   const [formData, setFormData] = useState<Partial<NoteInput>>({
     title: '',
     content: '',
-    language: 'javascript',
-    category: 'Other',
+    language: '',
+    category: '',
     tags: [],
     favorite: false,
   });
   const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
 
+  const detectLanguageAndCategory = () => {
+    const combinedText = `${formData.title} ${formData.content}`.toLowerCase();
+    
+    // Language detection based on content and title
+    let detectedLanguage = 'plaintext';
+    const languageKeywords: Record<string, string[]> = {
+      abap: ['abap', 'data:', 'types:', 'loop at', 'endloop', 'if', 'endif', 'select', 'endselect', 'move', 'write', 'report'],
+      javascript: ['javascript', 'js', 'node', 'npm', 'react', 'vue', 'angular', 'const', 'let', 'var', 'function', 'console.log'],
+      typescript: ['typescript', 'ts', 'interface', 'type', 'enum', 'implements', 'extends'],
+      python: ['python', 'py', 'def', 'import', 'from', 'class', 'self', 'print('],
+      java: ['java', 'public class', 'private', 'protected', 'static void', 'new ', 'System.out'],
+      csharp: ['c#', 'csharp', 'using System', 'namespace', 'public class', 'private', 'protected'],
+      cpp: ['c++', 'cpp', '#include', 'std::', 'cout', 'cin', 'vector<', 'nullptr'],
+      go: ['golang', 'go', 'package main', 'func', 'import (', 'fmt.'],
+      rust: ['rust', 'fn ', 'let mut', 'impl', 'trait', 'struct', 'enum', 'cargo'],
+      php: ['php', '<?php', '$', 'echo', 'function', 'class', 'namespace'],
+      ruby: ['ruby', 'rb', 'def', 'end', 'class', 'module', 'puts', 'require'],
+      swift: ['swift', 'var', 'let', 'func', 'class', 'struct', 'enum', 'import'],
+      kotlin: ['kotlin', 'fun', 'val', 'var', 'class', 'object', 'companion'],
+      sql: ['sql', 'select', 'from', 'where', 'insert', 'update', 'delete', 'create table', 'join'],
+      html: ['html', '<div', '<p>', '<h1', '<body', '<head', '<!DOCTYPE', '<meta'],
+      css: ['css', 'style', '{', '}', 'color:', 'background:', 'display:', 'position:'],
+      json: ['json', '{', '}', ':', '"', '[', ']'],
+      yaml: ['yaml', 'yml', ':', '-', 'version:', 'services:', 'image:'],
+      xml: ['xml', '<?xml', '<', '>', '/>', 'version="', 'encoding='],
+      markdown: ['markdown', 'md', '#', '##', '###', '```', '**', '*', '[', ']', '!['],
+      bash: ['bash', 'sh', '#!/bin/bash', 'echo', 'if [', 'then', 'fi', 'for', 'do'],
+      shell: ['shell', '#!/bin/sh', 'echo', 'export', 'source', 'alias'],
+    };
+
+    for (const [lang, keywords] of Object.entries(languageKeywords)) {
+      if (keywords.some(keyword => combinedText.includes(keyword))) {
+        detectedLanguage = lang;
+        break;
+      }
+    }
+
+    // Category detection based on content and title
+    let detectedCategory = 'Other';
+    const categoryKeywords: Record<string, string[]> = {
+      Algorithm: ['algorithm', 'sort', 'search', 'binary', 'tree', 'graph', 'dynamic programming', 'recursion'],
+      Tutorial: ['tutorial', 'guide', 'how to', 'learn', 'example', 'step by step', 'beginner'],
+      Debug: ['debug', 'error', 'fix', 'issue', 'problem', 'bug', 'troubleshoot', 'solve'],
+      Feature: ['feature', 'implement', 'add', 'new', 'functionality', 'enhancement', 'improve'],
+      Config: ['config', 'configuration', 'setup', 'settings', 'environment', 'env', 'yml', 'json'],
+      Test: ['test', 'testing', 'unit test', 'integration', 'jest', 'mocha', 'pytest', 'assert'],
+      Documentation: ['documentation', 'docs', 'readme', 'api', 'reference', 'guide', 'manual'],
+      Refactor: ['refactor', 'clean', 'optimize', 'improve', 'restructure', 'reorganize'],
+      Security: ['security', 'auth', 'authentication', 'encryption', 'token', 'password', 'secure'],
+      Performance: ['performance', 'optimize', 'speed', 'fast', 'slow', 'memory', 'cpu', 'benchmark'],
+    };
+
+    for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+      const categoryExists = categories.some(c => c.name === cat);
+      if (categoryExists && keywords.some(keyword => combinedText.includes(keyword))) {
+        detectedCategory = cat;
+        break;
+      }
+    }
+
+    return { language: detectedLanguage, category: detectedCategory };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Check if language or category is empty
+    if (!formData.language || !formData.category) {
+      const { language, category } = detectLanguageAndCategory();
+      setSuggestedLanguage(language);
+      setSuggestedCategory(category);
+      setShowAutoFillDialog(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -66,6 +150,22 @@ export default function NewNotePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAutoFillConfirm = () => {
+    setFormData({
+      ...formData,
+      language: suggestedLanguage || 'plaintext',
+      category: suggestedCategory || 'Other',
+    });
+    setShowAutoFillDialog(false);
+    // Retry submission with filled values
+    setTimeout(() => {
+      const form = document.querySelector('form');
+      if (form) {
+        form.requestSubmit();
+      }
+    }, 100);
   };
 
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -172,7 +272,7 @@ export default function NewNotePage() {
           <CardHeader>
             <CardTitle>Note Details</CardTitle>
             <CardDescription>
-              Create a new code snippet or technical note
+              Create a new note
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -187,46 +287,6 @@ export default function NewNotePage() {
                   required
                   autoFocus
                 />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language *</Label>
-                  <Select
-                    value={formData.language}
-                    onValueChange={(value) => setFormData({ ...formData, language: value })}
-                  >
-                    <SelectTrigger id="language">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LANGUAGES.map((lang) => (
-                        <SelectItem key={lang} value={lang}>
-                          {lang}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
-                  >
-                    <SelectTrigger id="category">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -255,16 +315,58 @@ export default function NewNotePage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="content">Code Content *</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Paste your code here..."
-                  className="font-mono min-h-[300px]"
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="language">Language *</Label>
+                    <Select
+                      value={formData.language}
+                      onValueChange={(value) => setFormData({ ...formData, language: value })}
+                    >
+                      <SelectTrigger id="language">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LANGUAGES.map((lang) => (
+                          <SelectItem key={lang} value={lang}>
+                            {lang}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    >
+                      <SelectTrigger id="category">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="content">Content *</Label>
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="Enter your content here..."
+                    className="font-mono min-h-[300px]"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -326,6 +428,35 @@ export default function NewNotePage() {
         open={showDiffViewer}
         onOpenChange={setShowDiffViewer}
       />
+
+      <Dialog open={showAutoFillDialog} onOpenChange={setShowAutoFillDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Auto-fill Language and Category</DialogTitle>
+            <DialogDescription>
+              Based on your title and content, we suggest the following:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Language:</span>
+              <Badge variant="secondary">{suggestedLanguage}</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Category:</span>
+              <Badge variant="secondary">{suggestedCategory}</Badge>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAutoFillDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAutoFillConfirm}>
+              Accept and Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
