@@ -4,7 +4,6 @@ import { useState, useEffect, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +16,14 @@ import { CodeSnippet } from '@/components/notes/code-snippet';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
 import { AppHeader } from '@/components/layout/app-header';
+import { useLanguage } from '@/contexts/language-context';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import dynamic from 'next/dynamic';
+
+// Lazy load SearchDialog
+const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
+  ssr: false,
+});
 
 const LANGUAGES = [
   'plaintext', 'abap', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 
@@ -32,6 +39,7 @@ export default function EditNotePage({ params }: Props) {
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { language } = useLanguage();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,9 +60,24 @@ export default function EditNotePage({ params }: Props) {
     category: 'Other',
     tags: [],
     favorite: false,
+    summary: undefined,
   });
   const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
+  
+  const fetchAllNotes = async () => {
+    try {
+      const response = await fetch('/api/notes');
+      if (response.ok) {
+        const data = await response.json();
+        setAllNotes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -72,7 +95,9 @@ export default function EditNotePage({ params }: Props) {
           category: data.category,
           tags: data.tags,
           favorite: data.favorite,
+          summary: data.summary,
         });
+        setSummary(data.summary || '');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load note');
       } finally {
@@ -96,6 +121,13 @@ export default function EditNotePage({ params }: Props) {
     fetchNote();
     fetchMetadata();
   }, [id]);
+  
+  // Only fetch all notes when search is opened
+  useEffect(() => {
+    if (showSearch && allNotes.length === 0) {
+      fetchAllNotes();
+    }
+  }, [showSearch, allNotes.length]);
 
   // Handle AI assist from preview mode
   useEffect(() => {
@@ -125,7 +157,10 @@ export default function EditNotePage({ params }: Props) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          summary: summary || formData.summary || undefined,
+        }),
       });
 
       if (!response.ok) {
@@ -246,6 +281,7 @@ export default function EditNotePage({ params }: Props) {
           content: formData.content,
           title: formData.title,
           language: formData.language,
+          userLanguage: language,
         }),
       });
 
@@ -283,6 +319,7 @@ export default function EditNotePage({ params }: Props) {
           content: formData.content,
           title: formData.title,
           language: formData.language,
+          userLanguage: language,
         }),
       });
 
@@ -333,7 +370,8 @@ export default function EditNotePage({ params }: Props) {
       <div className="h-full flex flex-col">
         <AppHeader 
           title="Edit Note" 
-          showSearch={false}
+          showSearch={true}
+          onSearch={() => setShowSearch(true)}
           subtitle={
             <Button
               variant="ghost"
@@ -460,14 +498,13 @@ export default function EditNotePage({ params }: Props) {
                     <span className="text-sm font-medium text-muted-foreground">Content</span>
                     <div className="flex-1 h-px bg-border/50"></div>
                   </div>
-                  <div className="flex-1 rounded-lg border overflow-hidden">
-                    <Textarea
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  <div className="flex-1 overflow-hidden">
+                    <RichTextEditor
+                      value={formData.content || ''}
+                      onChange={(content) => setFormData({ ...formData, content })}
                       placeholder="Start writing your code or notes..."
-                      className="h-full w-full font-mono text-sm leading-relaxed resize-none border-0 bg-transparent p-4 focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/40"
-                      style={{ minHeight: 'calc(100vh - 400px)' }}
+                      className="h-full"
+                      minHeight="calc(100vh - 400px)"
                       required
                     />
                   </div>
@@ -646,6 +683,12 @@ export default function EditNotePage({ params }: Props) {
         onRegenerate={handleRegenerateCode}
         open={showDiffViewer}
         onOpenChange={setShowDiffViewer}
+      />
+      
+      <SearchDialog 
+        open={showSearch} 
+        onOpenChange={setShowSearch} 
+        notes={allNotes} 
       />
     </AppLayout>
   );

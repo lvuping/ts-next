@@ -15,6 +15,7 @@ interface NoteRow {
   template: string | null;
   tags: string | null;
   relatedNotes: string | null;
+  summary: string | null;
 }
 
 const templates: NoteTemplate[] = [
@@ -104,6 +105,7 @@ export async function getAllNotes(filters?: {
       n.updated_at as updatedAt,
       n.folder_id as folderId,
       n.template,
+      n.summary,
       GROUP_CONCAT(DISTINCT t.name) as tags,
       GROUP_CONCAT(DISTINCT rn.related_note_id) as relatedNotes
     FROM notes n
@@ -162,7 +164,8 @@ export async function getAllNotes(filters?: {
     updatedAt: row.updatedAt,
     folderId: row.folderId || undefined,
     template: row.template || undefined,
-    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : []
+    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : [],
+    summary: row.summary || undefined
   }));
 }
 
@@ -181,6 +184,7 @@ export async function getNoteById(id: string): Promise<Note | null> {
       n.updated_at as updatedAt,
       n.folder_id as folderId,
       n.template,
+      n.summary,
       GROUP_CONCAT(DISTINCT t.name) as tags,
       GROUP_CONCAT(DISTINCT rn.related_note_id) as relatedNotes
     FROM notes n
@@ -205,7 +209,8 @@ export async function getNoteById(id: string): Promise<Note | null> {
     updatedAt: row.updatedAt,
     folderId: row.folderId || undefined,
     template: row.template || undefined,
-    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : []
+    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : [],
+    summary: row.summary || undefined
   };
 }
 
@@ -219,8 +224,8 @@ export async function createNote(input: NoteInput): Promise<Note> {
     db.prepare(`
       INSERT INTO notes (
         id, title, content, language, category, favorite, 
-        created_at, updated_at, folder_id, template
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        created_at, updated_at, folder_id, template, summary
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       input.title,
@@ -231,7 +236,8 @@ export async function createNote(input: NoteInput): Promise<Note> {
       now,
       now,
       input.folderId || null,
-      input.template || null
+      input.template || null,
+      input.summary || null
     );
     
     for (const tag of input.tags || []) {
@@ -268,7 +274,8 @@ export async function updateNote(id: string, input: Partial<NoteInput>): Promise
         favorite = ?,
         updated_at = ?,
         folder_id = ?,
-        template = ?
+        template = ?,
+        summary = ?
       WHERE id = ?
     `).run(
       input.title ?? existing.title,
@@ -279,6 +286,7 @@ export async function updateNote(id: string, input: Partial<NoteInput>): Promise
       now,
       input.folderId !== undefined ? input.folderId : existing.folderId,
       input.template !== undefined ? input.template : existing.template,
+      input.summary !== undefined ? input.summary : existing.summary,
       id
     );
     

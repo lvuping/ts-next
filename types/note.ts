@@ -13,6 +13,7 @@ export interface Note {
   relatedNotes?: string[];
   template?: string;
   folderId?: string;
+  summary?: string;
 }
 
 export interface NoteInput {
@@ -25,6 +26,7 @@ export interface NoteInput {
   relatedNotes?: string[];
   template?: string;
   folderId?: string;
+  summary?: string;
 }
 
 export interface NoteTemplate {

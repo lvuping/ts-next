@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Search, BarChart3, Download, Upload, LogOut } from 'lucide-react';
+import { LanguageSelector } from '@/components/ui/language-selector';
+import { useLanguage } from '@/contexts/language-context';
 
 interface AppHeaderProps {
   title: string;
@@ -35,6 +37,7 @@ export function AppHeader({
   subtitle,
 }: AppHeaderProps) {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleLogout = async () => {
     try {
@@ -57,7 +60,7 @@ export function AppHeader({
               variant="ghost" 
               size="icon" 
               onClick={onSearch}
-              title="Search notes (Double tap Control)"
+              title={t.app.search}
             >
               <Search className="h-4 w-4" />
             </Button>
@@ -87,9 +90,10 @@ export function AppHeader({
               <Upload className="h-4 w-4" />
             </Button>
           )}
+          <LanguageSelector />
           {showThemeToggle && <ThemeToggle />}
           {showLogout && (
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+            <Button variant="ghost" size="icon" onClick={handleLogout} title={t.app.logout}>
               <LogOut className="h-4 w-4" />
             </Button>
           )}

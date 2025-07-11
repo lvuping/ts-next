@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { content, title, language } = await request.json();
+    const { content, title, language, userLanguage = 'en' } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -27,14 +27,20 @@ export async function POST(request: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
+    const languageInstructions = {
+      en: 'Provide a clear, concise summary in English that captures the main purpose and functionality.',
+      ko: '주요 목적과 기능을 포착하는 명확하고 간결한 한국어 요약을 제공하세요.',
+      de: 'Geben Sie eine klare, prägnante Zusammenfassung auf Deutsch, die den Hauptzweck und die Funktionalität erfasst.'
+    };
+
     const prompt = `Summarize the following ${language || 'code'} snippet in 2-3 sentences.
 Title: ${title || 'Untitled'}
 Content: ${content}
 
-Provide a clear, concise summary that captures the main purpose and functionality.`;
+${languageInstructions[userLanguage as keyof typeof languageInstructions] || languageInstructions.en}`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: prompt,
     });
     

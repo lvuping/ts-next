@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { content, title, language } = await request.json();
+    const { content, title, language, userLanguage = 'en' } = await request.json();
 
     if (!content && !title) {
       return NextResponse.json(
@@ -27,15 +27,20 @@ export async function POST(request: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
+    const languageInstructions = {
+      en: 'Generate 3-5 relevant tags in English that describe the main topics, technologies, concepts, or frameworks used.\nReturn only the tags as a comma-separated list, no explanations.',
+      ko: '주요 주제, 기술, 개념 또는 사용된 프레임워크를 설명하는 3-5개의 관련 태그를 한국어로 생성하세요.\n설명 없이 쉼표로 구분된 태그 목록만 반환하세요.',
+      de: 'Generieren Sie 3-5 relevante Tags auf Deutsch, die die Hauptthemen, Technologien, Konzepte oder verwendeten Frameworks beschreiben.\nGeben Sie nur die Tags als kommagetrennte Liste zurück, keine Erklärungen.'
+    };
+
     const prompt = `Analyze the following ${language || 'code'} snippet and generate relevant tags.
 Title: ${title || 'Untitled'}
 Content: ${content || ''}
 
-Generate 3-5 relevant tags that describe the main topics, technologies, concepts, or frameworks used.
-Return only the tags as a comma-separated list, no explanations.`;
+${languageInstructions[userLanguage as keyof typeof languageInstructions] || languageInstructions.en}`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: prompt,
     });
     

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { X, Wand2, Tags, Loader2 } from 'lucide-react';
@@ -12,6 +11,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { NoteInput } from '@/types/note';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import {
   Dialog,
   DialogContent,
@@ -407,14 +407,13 @@ export default function NewNotePage() {
                   <span className="text-sm font-medium text-muted-foreground">Content</span>
                   <div className="flex-1 h-px bg-border/50"></div>
                 </div>
-                <div className="flex-1 bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden">
-                  <Textarea
-                    id="content"
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                <div className="flex-1 overflow-hidden">
+                  <RichTextEditor
+                    value={formData.content || ''}
+                    onChange={(content) => setFormData({ ...formData, content })}
                     placeholder="Start writing your code or notes..."
-                    className="h-full w-full font-mono text-sm leading-relaxed resize-none border-0 bg-transparent p-4 focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/40"
-                    style={{ minHeight: 'calc(100vh - 400px)' }}
+                    className="h-full"
+                    minHeight="calc(100vh - 400px)"
                     required
                   />
                 </div>

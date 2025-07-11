@@ -42,6 +42,7 @@ function createTables(db: Database.Database) {
       updated_at TEXT NOT NULL,
       folder_id TEXT,
       template TEXT,
+      summary TEXT,
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     )
   `);
@@ -89,6 +90,7 @@ function migrateSchema(db: Database.Database) {
   // Check if category_id column exists
   const columns = db.prepare("PRAGMA table_info(notes)").all() as Array<{ name: string }>;
   const hasCategoryId = columns.some(col => col.name === 'category_id');
+  const hasSummary = columns.some(col => col.name === 'summary');
   
   if (!hasCategoryId) {
     console.log('Adding category_id column to notes table...');
@@ -98,6 +100,17 @@ function migrateSchema(db: Database.Database) {
     } catch (error) {
       // If the column already exists or there's another error, log it but continue
       console.log('Note: Could not add category_id column:', error);
+    }
+  }
+  
+  if (!hasSummary) {
+    console.log('Adding summary column to notes table...');
+    try {
+      db.exec('ALTER TABLE notes ADD COLUMN summary TEXT');
+      console.log('Successfully added summary column');
+    } catch (error) {
+      // If the column already exists or there's another error, log it but continue
+      console.log('Note: Could not add summary column:', error);
     }
   }
 }

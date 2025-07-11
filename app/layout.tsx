@@ -4,6 +4,8 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { ViewModeIndicator } from '@/components/notes/view-mode-indicator';
+import { LanguageProvider } from '@/contexts/language-context';
+import ErrorBoundary from '@/components/error-boundary';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,9 +32,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
-          <ViewModeIndicator />
+          <LanguageProvider>
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+            <Toaster />
+            <ViewModeIndicator />
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

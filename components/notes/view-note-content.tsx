@@ -8,9 +8,15 @@ import { AppHeader } from '@/components/layout/app-header';
 import Link from 'next/link';
 import { CodeSnippet } from '@/components/notes/code-snippet';
 import { Note } from '@/types/note';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// Lazy load SearchDialog
+const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
+  ssr: false,
+});
 
 interface ViewNoteContentProps {
   note: Note;
@@ -21,8 +27,29 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
   const { toast } = useToast();
   const router = useRouter();
+
+  const fetchAllNotes = async () => {
+    try {
+      const response = await fetch('/api/notes');
+      if (response.ok) {
+        const data = await response.json();
+        setAllNotes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    }
+  };
+  
+  // Only fetch all notes when search is opened
+  useEffect(() => {
+    if (showSearch && allNotes.length === 0) {
+      fetchAllNotes();
+    }
+  }, [showSearch, allNotes.length]);
 
   const handleAssist = async () => {
     if (!assistPrompt.trim()) {
@@ -95,7 +122,8 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
     <div className="h-full flex flex-col">
       <AppHeader 
         title="View Note" 
-        showSearch={false}
+        showSearch={true}
+        onSearch={() => setShowSearch(true)}
         subtitle={
           <Link href={`/notes/edit/${note.id}`}>
             <Button variant="outline" size="sm">
@@ -254,6 +282,11 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
         </div>
       </main>
 
+      <SearchDialog 
+        open={showSearch} 
+        onOpenChange={setShowSearch} 
+        notes={allNotes} 
+      />
     </div>
   );
 }

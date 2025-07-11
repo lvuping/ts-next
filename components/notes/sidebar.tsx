@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Heart, FileText, Tag, Zap, Plus, ChevronLeft, Settings, Code, Server, Database, Cloud, Shield, Folder } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Category {
   id: number;
@@ -26,6 +27,7 @@ interface SidebarProps {
 export function Sidebar({ categories, tags, className, onClose }: SidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -109,7 +111,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
       <Link href="/notes/new" className="block">
         <Button className="w-full">
           <Plus className="h-4 w-4 mr-2" />
-          New Note
+          {t.nav.newNote}
         </Button>
       </Link>
 
@@ -120,7 +122,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
           onClick={handleClearFilters}
         >
           <FileText className="h-4 w-4 mr-2" />
-          All Notes
+          {t.nav.allNotes}
         </Button>
         <Button
           variant="ghost"
@@ -128,7 +130,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
           onClick={handleFavoritesClick}
         >
           <Heart className="h-4 w-4 mr-2" />
-          Favorites
+          {t.nav.favorites}
         </Button>
         <Link href="/notes/templates">
           <Button variant="ghost" className="w-full justify-start">
@@ -140,7 +142,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Categories</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">{t.nav.categories}</h3>
           <Link href="/categories">
             <Button variant="ghost" size="sm" className="h-7 px-2">
               <Settings className="h-3 w-3" />
@@ -170,7 +172,7 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Tags</h3>
+        <h3 className="text-sm font-semibold mb-3 text-muted-foreground">{t.nav.tags}</h3>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
             <Badge
