@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const ai = new GoogleGenAI({});
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,8 +13,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `Based on the following code/note, suggest 3-5 relevant tags that would help categorize and find this content later.
 
@@ -36,9 +34,11 @@ Rules:
 
 Return only a JSON array of suggested tags like: ["tag1", "tag2", "tag3"]`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+    const text = response.text || '';
     
     // Extract JSON array from the response
     const jsonMatch = text.match(/\[[\s\S]*\]/);

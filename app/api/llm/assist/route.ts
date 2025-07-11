@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { isAuthenticated } from '@/lib/auth';
 import { env } from '@/lib/env';
 
@@ -25,8 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
     const systemPrompt = `You are a code assistant helping with ${language || 'code'} development. 
     Provide clean, well-structured code that follows best practices and common patterns.
@@ -39,9 +38,11 @@ export async function POST(request: NextRequest) {
 
     const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    const generatedText = response.text();
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: fullPrompt,
+    });
+    const generatedText = response.text || '';
 
     // Extract code from the response if it's wrapped in code blocks
     const codeMatch = generatedText.match(/```[\w]*\n([\s\S]*?)```/);

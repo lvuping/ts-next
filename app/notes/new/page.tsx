@@ -304,14 +304,14 @@ export default function NewNotePage() {
 
   return (
     <AppLayout categories={categories} tags={tags}>
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="h-screen bg-background flex flex-col overflow-hidden">
         <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Create New Note</h1>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="max-w-7xl mx-auto h-full">
-            <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <main className="flex-1 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="max-w-7xl mx-auto h-full overflow-hidden">
+            <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-y-auto">
               {/* Title Section */}
               <div className="px-8 pt-6 pb-3">
                 <Input
@@ -403,22 +403,21 @@ export default function NewNotePage() {
               </div>
 
               {/* Content Editor */}
-              <div className="flex-1 px-8 pb-6 min-h-[500px]">
-                <div className="h-full flex flex-col space-y-2">
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="text-sm font-medium text-muted-foreground">Content</span>
-                    <div className="flex-1 h-px bg-border/50"></div>
-                  </div>
-                  <div className="flex-1 bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
-                    <Textarea
-                      id="content"
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      placeholder="Start writing your code or notes..."
-                      className="h-full w-full min-h-[500px] font-mono text-sm leading-relaxed resize-none border-0 bg-transparent p-4 focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/40"
-                      required
-                    />
-                  </div>
+              <div className="flex-1 px-8 pb-6 overflow-hidden flex flex-col">
+                <div className="flex items-center gap-2 px-1 mb-2">
+                  <span className="text-sm font-medium text-muted-foreground">Content</span>
+                  <div className="flex-1 h-px bg-border/50"></div>
+                </div>
+                <div className="flex-1 bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10 overflow-hidden">
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="Start writing your code or notes..."
+                    className="h-full w-full font-mono text-sm leading-relaxed resize-none border-0 bg-transparent p-4 focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/40"
+                    style={{ minHeight: 'calc(100vh - 400px)' }}
+                    required
+                  />
                 </div>
               </div>
 

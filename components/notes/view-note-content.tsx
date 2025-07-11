@@ -91,7 +91,7 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       <header className="border-b-2 border-border/50 px-6 py-4 flex-shrink-0 bg-gradient-to-r from-background to-background/95 shadow-sm">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">View Note</h1>
@@ -104,8 +104,8 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="max-w-7xl mx-auto h-full flex flex-col">
+      <main className="flex-1 overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="max-w-7xl mx-auto h-full flex flex-col overflow-y-auto">
           {/* Title Section */}
           <div className="px-8 pt-6 pb-3">
             <h2 className="text-3xl font-bold tracking-tight">{note.title}</h2>
@@ -191,7 +191,7 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
           </div>
 
           {/* Content Section */}
-          <div className="flex-1 px-8 pb-6 min-h-[500px]">
+          <div className="flex-1 px-8 pb-6">
             <div className="space-y-2">
               {/* Summary Section */}
               {summary && (
