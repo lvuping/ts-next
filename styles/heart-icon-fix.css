@@ -1,0 +1,13 @@
+/* Fix for heart icon fill */
+.fill-current {
+  fill: currentColor !important;
+}
+
+/* Ensure red heart is visible */
+.text-red-500 .fill-current {
+  fill: rgb(239 68 68) !important;
+}
+
+.fill-red-500 {
+  fill: rgb(239 68 68) !important;
+}
