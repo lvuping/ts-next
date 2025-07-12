@@ -155,7 +155,7 @@ test.describe('API Routes', () => {
     expect(getResponse.status()).toBe(404);
   });
 
-  test('POST /api/notes/[id]/favorite - should toggle favorite', async ({ request }) => {
+  test('PATCH /api/notes/[id]/favorite - should toggle favorite', async ({ request }) => {
     // First create a note
     const createResponse = await request.post('/api/notes', {
       headers: {
@@ -175,7 +175,7 @@ test.describe('API Routes', () => {
     expect(createdNote.favorite).toBe(false);
     
     // Toggle favorite
-    const response = await request.post(`/api/notes/${createdNote.id}/favorite`, {
+    const response = await request.patch(`/api/notes/${createdNote.id}/favorite`, {
       headers: {
         'Cookie': authCookie
       }
