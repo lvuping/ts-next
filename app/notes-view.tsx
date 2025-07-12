@@ -164,22 +164,20 @@ export function NotesView() {
     setDisplayedNotes(displayedNotes.filter(note => note.id !== id));
   };
 
-  const handleToggleFavorite = async (id: string) => {
-    // Find the note to get its current state
-    const noteToUpdate = notes.find(note => note.id === id);
-    if (!noteToUpdate) return;
+  const handleToggleFavorite = useCallback((id: string) => {
+    // Use functional state update to avoid stale state issues
+    setNotes(prevNotes => 
+      prevNotes.map(note => 
+        note.id === id ? { ...note, favorite: !note.favorite } : note
+      )
+    );
     
-    // Optimistic update - toggle the favorite status
-    const updateNote = (note: Note) => 
-      note.id === id ? { ...note, favorite: !noteToUpdate.favorite } : note;
-    
-    setNotes(notes.map(updateNote));
-    setDisplayedNotes(displayedNotes.map(updateNote));
-    
-    // Note: The actual API call is handled in the NoteCard component
-    // This function just handles the optimistic update
-    // If the API call fails, the NoteCard will not call this function
-  };
+    setDisplayedNotes(prevDisplayedNotes => 
+      prevDisplayedNotes.map(note => 
+        note.id === id ? { ...note, favorite: !note.favorite } : note
+      )
+    );
+  }, []);
 
 
   const activeFilter = searchParams.get('category') || searchParams.get('tag') || 
@@ -255,7 +253,6 @@ export function NotesView() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-4">Title</th>
-                    <th className="text-left p-4">Language</th>
                     <th className="text-left p-4">Category</th>
                     <th className="text-left p-4">Tags</th>
                     <th className="text-left p-4">Updated</th>
@@ -270,6 +267,7 @@ export function NotesView() {
                       viewMode={viewMode}
                       onDelete={handleDelete}
                       onToggleFavorite={handleToggleFavorite}
+                      categories={categories}
                     />
                   ))}
                 </tbody>
@@ -285,6 +283,7 @@ export function NotesView() {
                     viewMode={viewMode}
                     onDelete={handleDelete}
                     onToggleFavorite={handleToggleFavorite}
+                    categories={categories}
                   />
                 ))}
               </div>

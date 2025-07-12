@@ -374,13 +374,14 @@ export function importNotes(markdown: string): NoteInput[] {
     const lines = section.trim().split('\n');
     const title = lines[0].trim();
     
-    const metaMatch = section.match(/\*\*Language:\*\* (\w+)\s*\n\*\*Category:\*\* (\w+)\s*\n\*\*Tags:\*\* ([^\n]+)/);
-    const language = metaMatch?.[1] || 'plaintext';
-    const category = metaMatch?.[2] || 'Other';
-    const tags = metaMatch?.[3]?.split(',').map(t => t.trim()) || [];
+    const metaMatch = section.match(/\*\*Category:\*\* (\w+)\s*\n\*\*Tags:\*\* ([^\n]+)/);
+    const language = 'markdown';
+    const category = metaMatch?.[1] || 'Other';
+    const tags = metaMatch?.[2]?.split(',').map(t => t.trim()) || [];
     
-    const codeMatch = section.match(/```[\w]*\n([\s\S]+?)```/);
-    const content = codeMatch?.[1] || '';
+    // Extract content after metadata
+    const contentStart = section.indexOf('\n\n', section.indexOf('**Tags:**')) + 2;
+    const content = contentStart > 1 ? section.substring(contentStart).trim() : '';
     
     notes.push({
       title,
@@ -400,13 +401,10 @@ export function exportNotesToMarkdown(notes: Note[]): string {
     const tags = note.tags.join(', ');
     return `## ${note.title}
 
-**Language:** ${note.language}
 **Category:** ${note.category}
 **Tags:** ${tags}
 
-\`\`\`${note.language}
 ${note.content}
-\`\`\`
 `;
   }).join('\n---\n\n');
 }

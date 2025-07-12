@@ -4,7 +4,6 @@ import { useState, useEffect, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,12 +11,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { X, Trash2, Wand2, Eye, Code, Sparkles, Hash } from 'lucide-react';
 import Link from 'next/link';
 import { Note, NoteInput } from '@/types/note';
-import { CodeSnippet } from '@/components/notes/code-snippet';
 import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
 import { AppHeader } from '@/components/layout/app-header';
 import { useLanguage } from '@/contexts/language-context';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { MarkdownRenderer } from '@/components/notes/markdown-renderer';
+import { CategorySelector } from '@/components/ui/category-selector';
 import dynamic from 'next/dynamic';
 import { useGlobalSearch } from '@/hooks/use-global-search';
 
@@ -26,11 +26,6 @@ const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').th
   ssr: false,
 });
 
-const LANGUAGES = [
-  'plaintext', 'abap', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 
-  'go', 'rust', 'php', 'ruby', 'swift', 'kotlin', 'sql', 'html', 'css', 'scss', 
-  'json', 'yaml', 'xml', 'markdown', 'bash', 'shell'
-];
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -57,7 +52,7 @@ export default function EditNotePage({ params }: Props) {
   const [formData, setFormData] = useState<Partial<NoteInput>>({
     title: '',
     content: '',
-    language: 'plaintext',
+    language: 'markdown',
     category: 'Other',
     tags: [],
     favorite: false,
@@ -424,41 +419,12 @@ export default function EditNotePage({ params }: Props) {
                   {/* Language and Category Selectors */}
                   <div className="flex gap-3 items-center">
                     <div className="flex items-center gap-2">
-                      <label htmlFor="language" className="text-sm text-muted-foreground">Language:</label>
-                      <Select
-                        value={formData.language}
-                        onValueChange={(value) => setFormData({ ...formData, language: value })}
-                      >
-                        <SelectTrigger id="language" className="w-[180px] h-8 text-sm">
-                          <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {LANGUAGES.map((lang) => (
-                            <SelectItem key={lang} value={lang} className="text-sm">
-                              {lang}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-center gap-2">
                       <label htmlFor="category" className="text-sm text-muted-foreground">Category:</label>
-                      <Select
-                        value={formData.category}
+                      <CategorySelector
+                        categories={categories}
+                        value={formData.category || ''}
                         onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      >
-                        <SelectTrigger id="category" className="w-[180px] h-8 text-sm">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.name} className="text-sm">
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
                   </div>
 
@@ -629,17 +595,18 @@ export default function EditNotePage({ params }: Props) {
                     <CardTitle className="text-2xl">{formData.title || 'Untitled'}</CardTitle>
                     <CardDescription>
                       <div className="flex gap-2 mt-3">
-                        <Badge className="px-3 py-1">{formData.language}</Badge>
                         <Badge variant="outline" className="px-3 py-1">{formData.category}</Badge>
                       </div>
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {formData.content ? (
-                      <CodeSnippet
-                        code={formData.content}
-                        language={formData.language || 'plaintext'}
-                      />
+                      <div className="overflow-auto">
+                        <MarkdownRenderer
+                          content={formData.content}
+                          className="prose prose-neutral dark:prose-invert max-w-none"
+                        />
+                      </div>
                     ) : (
                       <p className="text-muted-foreground py-8 text-center">No content to preview</p>
                     )}

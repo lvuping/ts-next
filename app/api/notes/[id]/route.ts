@@ -40,12 +40,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body: NoteInput = await request.json();
     
     // Validate required fields
-    if (!body.title || !body.content || !body.language || !body.category) {
+    if (!body.title || !body.content || !body.category) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
+    
+    // Default language to markdown
+    body.language = body.language || 'markdown';
 
     const note = await updateNote(id, body);
     

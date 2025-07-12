@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { X, Wand2, Tags, Loader2 } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
@@ -13,6 +12,7 @@ import { CodeDiffViewer } from '@/components/notes/code-diff-viewer';
 import { AppLayout } from '@/components/layout/app-layout';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useLanguage } from '@/contexts/language-context';
+import { CategorySelector } from '@/components/ui/category-selector';
 import dynamic from 'next/dynamic';
 import { useGlobalSearch } from '@/hooks/use-global-search';
 import { useToast } from '@/hooks/use-toast';
@@ -30,11 +30,6 @@ const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').th
   ssr: false,
 });
 
-const LANGUAGES = [
-  'plaintext', 'abap', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 
-  'go', 'rust', 'php', 'ruby', 'swift', 'kotlin', 'sql', 'html', 'css', 'scss', 
-  'json', 'yaml', 'xml', 'markdown', 'bash', 'shell'
-];
 
 export default function NewNotePage() {
   const router = useRouter();
@@ -53,7 +48,7 @@ export default function NewNotePage() {
   const [formData, setFormData] = useState<Partial<NoteInput>>({
     title: '',
     content: '',
-    language: '',
+    language: 'markdown',
     category: '',
     tags: [],
     favorite: false,
@@ -194,7 +189,7 @@ export default function NewNotePage() {
   const handleAutoFillConfirm = () => {
     setFormData({
       ...formData,
-      language: suggestedLanguage || 'plaintext',
+      language: 'markdown',
       category: suggestedCategory || 'Other',
     });
     setShowAutoFillDialog(false);
@@ -375,41 +370,12 @@ export default function NewNotePage() {
                 {/* Language and Category Selectors */}
                 <div className="flex gap-3 items-center">
                   <div className="flex items-center gap-2">
-                    <label htmlFor="language" className="text-sm text-muted-foreground">Language:</label>
-                    <Select
-                      value={formData.language}
-                      onValueChange={(value) => setFormData({ ...formData, language: value })}
-                    >
-                      <SelectTrigger id="language" className="w-[180px] h-8 text-sm">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LANGUAGES.map((lang) => (
-                          <SelectItem key={lang} value={lang} className="text-sm">
-                            {lang}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center gap-2">
                     <label htmlFor="category" className="text-sm text-muted-foreground">Category:</label>
-                    <Select
-                      value={formData.category}
+                    <CategorySelector
+                      categories={categories}
+                      value={formData.category || ''}
                       onValueChange={(value) => setFormData({ ...formData, category: value })}
-                    >
-                      <SelectTrigger id="category" className="w-[180px] h-8 text-sm">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.name} className="text-sm">
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
                 </div>
 
@@ -561,7 +527,7 @@ export default function NewNotePage() {
       <CodeDiffViewer
         originalCode={formData.content || ''}
         generatedCode={generatedCode}
-        language={formData.language || 'plaintext'}
+        language="markdown"
         onApply={handleApplyGeneratedCode}
         onCancel={handleCancelGeneratedCode}
         onRegenerate={handleRegenerateCode}

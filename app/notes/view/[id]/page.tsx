@@ -1,11 +1,14 @@
 import { notFound } from 'next/navigation';
-import { getNoteById } from '@/lib/notes';
+import { getNoteById, getCategories } from '@/lib/notes';
 import { ViewWrapper } from './view-wrapper';
 import { ViewNoteContent } from '@/components/notes/view-note-content';
 
 export default async function ViewNotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const note = await getNoteById(id);
+  const [note, categories] = await Promise.all([
+    getNoteById(id),
+    getCategories()
+  ]);
 
   if (!note) {
     notFound();
@@ -13,7 +16,7 @@ export default async function ViewNotePage({ params }: { params: Promise<{ id: s
 
   return (
     <ViewWrapper>
-      <ViewNoteContent note={note} />
+      <ViewNoteContent note={note} categories={categories} />
     </ViewWrapper>
   );
 }

@@ -6,21 +6,32 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, MoreVertical, Edit, Trash, Copy, Share } from 'lucide-react';
+import { Heart, MoreVertical, Edit, Trash, Copy, Share, Folder, Code, Server, Database, Cloud, Shield } from 'lucide-react';
 import { Note } from '@/types/note';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CodeSnippet } from './code-snippet';
 import { useViewMode } from '@/hooks/use-view-mode';
+import { MarkdownPreview } from './markdown-preview';
 
 interface NoteCardProps {
   note: Note;
   viewMode?: 'detailed' | 'card' | 'compact';
   onDelete?: (id: string) => void;
   onToggleFavorite?: (id: string) => void;
+  categories?: Array<{ id: number; name: string; color: string; icon: string; position: number }>;
 }
 
-function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite }: NoteCardProps) {
+const icons = {
+  folder: Folder,
+  code: Code,
+  server: Server,
+  database: Database,
+  cloud: Cloud,
+  shield: Shield,
+};
+
+function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite, categories = [] }: NoteCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const { isViewMode } = useViewMode();
@@ -115,10 +126,28 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
           </Link>
         </td>
         <td className="p-4">
-          <Badge variant="secondary">{note.language}</Badge>
-        </td>
-        <td className="p-4">
-          <Badge variant="outline">{note.category}</Badge>
+          {(() => {
+            const category = categories.find(cat => cat.name === note.category);
+            const Icon = category ? icons[category.icon as keyof typeof icons] || Folder : Folder;
+            return (
+              <Badge 
+                variant="outline" 
+                className="flex items-center gap-1.5 w-fit"
+                style={{
+                  borderColor: category?.color || undefined,
+                  backgroundColor: category ? category.color + '10' : undefined
+                }}
+              >
+                {category && (
+                  <Icon 
+                    className="h-3 w-3" 
+                    style={{ color: category.color }}
+                  />
+                )}
+                <span style={{ color: category?.color || undefined }}>{note.category}</span>
+              </Badge>
+            );
+          })()}
         </td>
         <td className="p-4">
           <div className="flex gap-1 flex-wrap">
@@ -231,15 +260,35 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
       </CardHeader>
       <CardContent className="relative">
         <div className="flex gap-2 mb-3 flex-wrap">
-          <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">{note.language}</Badge>
-          <Badge variant="outline" className="hover:bg-secondary transition-colors">{note.category}</Badge>
+          {(() => {
+            const category = categories.find(cat => cat.name === note.category);
+            const Icon = category ? icons[category.icon as keyof typeof icons] || Folder : Folder;
+            return (
+              <Badge 
+                variant="outline" 
+                className="hover:bg-secondary transition-colors flex items-center gap-1.5"
+                style={{
+                  borderColor: category?.color || undefined,
+                  backgroundColor: category ? category.color + '10' : undefined
+                }}
+              >
+                {category && (
+                  <Icon 
+                    className="h-3 w-3" 
+                    style={{ color: category.color }}
+                  />
+                )}
+                <span style={{ color: category?.color || undefined }}>{note.category}</span>
+              </Badge>
+            );
+          })()}
         </div>
         {viewMode === 'detailed' ? (
           <div className="mt-4">
             <div className="rounded-lg border bg-muted/30 p-1">
               <CodeSnippet 
                 code={note.content} 
-                language={note.language}
+                language="markdown"
                 className="max-h-96"
               />
             </div>
@@ -251,14 +300,20 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
                 <p className="text-sm text-foreground line-clamp-2">
                   {note.summary}
                 </p>
-                <p className="text-xs text-muted-foreground line-clamp-2 font-mono">
-                  {note.content.substring(0, 100)}{note.content.length > 100 ? '...' : ''}
-                </p>
+                <div className="text-xs text-muted-foreground overflow-hidden" style={{ maxHeight: '3rem' }}>
+                  <MarkdownPreview 
+                    content={note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '')}
+                    className="prose-sm"
+                  />
+                </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground line-clamp-3 font-mono">
-                {note.content.substring(0, 150)}{note.content.length > 150 ? '...' : ''}
-              </p>
+              <div className="text-sm text-muted-foreground overflow-hidden" style={{ maxHeight: '4.5rem' }}>
+                <MarkdownPreview 
+                  content={note.content.substring(0, 150) + (note.content.length > 150 ? '...' : '')}
+                  className="prose-sm"
+                />
+              </div>
             )}
           </div>
         )}

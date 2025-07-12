@@ -3,10 +3,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, Edit, Heart, X, Wand2, FileText, Loader2 } from 'lucide-react';
+import { Calendar, Edit, Heart, X, Wand2, FileText, Loader2, Folder, Code, Server, Database, Cloud, Shield } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
 import Link from 'next/link';
-import { CodeSnippet } from '@/components/notes/code-snippet';
 import { MarkdownRenderer } from '@/components/notes/markdown-renderer';
 import { Note } from '@/types/note';
 import { useState, useEffect } from 'react';
@@ -23,9 +22,19 @@ const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').th
 
 interface ViewNoteContentProps {
   note: Note;
+  categories?: Array<{ id: number; name: string; color: string; icon: string; position: number }>;
 }
 
-export function ViewNoteContent({ note }: ViewNoteContentProps) {
+const icons = {
+  folder: Folder,
+  code: Code,
+  server: Server,
+  database: Database,
+  cloud: Cloud,
+  shield: Shield,
+};
+
+export function ViewNoteContent({ note, categories = [] }: ViewNoteContentProps) {
   const [assistPrompt, setAssistPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [summary, setSummary] = useState(note.summary || '');
@@ -174,13 +183,29 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
             {/* Language and Category */}
             <div className="flex gap-3 items-center">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Language:</span>
-                <Badge variant="outline" className="text-sm">{note.language}</Badge>
-              </div>
-
-              <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Category:</span>
-                <Badge variant="secondary" className="text-sm">{note.category}</Badge>
+                {(() => {
+                  const category = categories.find(cat => cat.name === note.category);
+                  const Icon = category ? icons[category.icon as keyof typeof icons] || Folder : Folder;
+                  return (
+                    <Badge 
+                      variant="secondary" 
+                      className="text-sm flex items-center gap-1.5"
+                      style={{
+                        borderColor: category?.color || undefined,
+                        backgroundColor: category ? category.color + '10' : undefined
+                      }}
+                    >
+                      {category && (
+                        <Icon 
+                          className="h-3.5 w-3.5" 
+                          style={{ color: category.color }}
+                        />
+                      )}
+                      <span style={{ color: category?.color || undefined }}>{note.category}</span>
+                    </Badge>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center gap-2 ml-auto">
@@ -279,20 +304,12 @@ export function ViewNoteContent({ note }: ViewNoteContentProps) {
               </div>
               <div className="h-full bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
                 <div className="h-full p-1">
-                  {note.language === 'markdown' ? (
-                    <div className="p-6 overflow-auto h-full bg-background">
-                      <MarkdownRenderer
-                        content={note.content}
-                        className="prose prose-neutral dark:prose-invert max-w-none"
-                      />
-                    </div>
-                  ) : (
-                    <CodeSnippet
-                      code={note.content}
-                      language={note.language}
-                      className="h-full"
+                  <div className="p-6 overflow-auto h-full bg-background">
+                    <MarkdownRenderer
+                      content={note.content}
+                      className="prose prose-neutral dark:prose-invert max-w-none"
                     />
-                  )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -30,9 +30,12 @@ export const POST = createAuthenticatedHandler(async (request: NextRequest) => {
   const body = await parseRequestBody<NoteInput>(request);
   
   // Validate required fields
-  if (!body.title || !body.content || !body.language || !body.category) {
+  if (!body.title || !body.content || !body.category) {
     throw new Error('Missing required fields');
   }
+  
+  // Default language to markdown
+  body.language = body.language || 'markdown';
 
   const note = await createNote(body);
   return note;
