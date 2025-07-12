@@ -74,7 +74,7 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
     
     try {
       const response = await fetch(`/api/notes/${note.id}/favorite`, {
-        method: 'POST',
+        method: 'PATCH',
       });
       
       if (!response.ok) {
