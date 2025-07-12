@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { CacheControl, addCacheHeaders } from '@/lib/cache-headers';
 
 const PUBLIC_PATHS = ['/login', '/api/auth'];
 const STATIC_EXTENSIONS = ['.ico', '.png', '.jpg', '.jpeg', '.svg', '.css', '.js', '.woff', '.woff2'];
@@ -7,9 +8,17 @@ const STATIC_EXTENSIONS = ['.ico', '.png', '.jpg', '.jpeg', '.svg', '.css', '.js
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Allow static files
+  // Handle static files with appropriate cache headers
   if (STATIC_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    const isFont = pathname.endsWith('.woff') || pathname.endsWith('.woff2');
+    const isImage = pathname.endsWith('.png') || pathname.endsWith('.jpg') || pathname.endsWith('.jpeg') || pathname.endsWith('.svg') || pathname.endsWith('.ico');
+    
+    if (isFont || isImage) {
+      return addCacheHeaders(response, CacheControl.PUBLIC_IMMUTABLE);
+    } else {
+      return addCacheHeaders(response, CacheControl.PUBLIC_STATIC);
+    }
   }
   
   // Allow public paths

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedHandler, parseRequestBody } from '@/lib/api-handler';
 import { getAllNotes, createNote, importNotes, exportNotesToMarkdown } from '@/lib/notes';
+import { CacheControl } from '@/lib/cache-headers';
 import type { NoteInput } from '@/types/note';
 
 export const GET = createAuthenticatedHandler(async (request: NextRequest) => {
@@ -18,6 +19,9 @@ export const GET = createAuthenticatedHandler(async (request: NextRequest) => {
 
   const result = await getAllNotes(filters);
   return result;
+}, {
+  cacheControl: CacheControl.API_LIST,
+  enableETag: true
 });
 
 export const POST = createAuthenticatedHandler(async (request: NextRequest) => {

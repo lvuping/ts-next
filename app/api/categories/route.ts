@@ -1,41 +1,35 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createAuthenticatedHandler, parseRequestBody } from '@/lib/api-handler';
+import { CacheControl } from '@/lib/cache-headers';
 import { getDb } from '@/lib/db';
 
-export async function GET() {
-  try {
-    const db = getDb();
-    const categories = db.prepare(`
-      SELECT id, name, color, icon, position, created_at, updated_at
-      FROM categories
-      ORDER BY position ASC, name ASC
-    `).all();
+export const GET = createAuthenticatedHandler(async () => {
+  const db = getDb();
+  const categories = db.prepare(`
+    SELECT id, name, color, icon, position, created_at, updated_at
+    FROM categories
+    ORDER BY position ASC, name ASC
+  `).all();
 
-    return NextResponse.json(categories);
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch categories' },
-      { status: 500 }
-    );
+  return categories;
+}, {
+  cacheControl: CacheControl.API_LIST,
+  enableETag: true
+});
+
+export const POST = createAuthenticatedHandler(async (request: NextRequest) => {
+  const { name, color, icon } = await parseRequestBody<{ name: string; color?: string; icon?: string }>(request);
+
+  if (!name || !name.trim()) {
+    throw new Error('Category name is required');
   }
-}
 
-export async function POST(request: Request) {
+  const db = getDb();
+  
+  const maxPosition = db.prepare('SELECT MAX(position) as max FROM categories').get() as { max: number | null };
+  const position = (maxPosition.max || 0) + 1;
+
   try {
-    const { name, color, icon } = await request.json();
-
-    if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: 'Category name is required' },
-        { status: 400 }
-      );
-    }
-
-    const db = getDb();
-    
-    const maxPosition = db.prepare('SELECT MAX(position) as max FROM categories').get() as { max: number | null };
-    const position = (maxPosition.max || 0) + 1;
-
     const result = db.prepare(`
       INSERT INTO categories (name, color, icon, position, created_at, updated_at)
       VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
@@ -48,18 +42,11 @@ export async function POST(request: Request) {
 
     const newCategory = db.prepare('SELECT * FROM categories WHERE id = ?').get(result.lastInsertRowid);
 
-    return NextResponse.json(newCategory, { status: 201 });
+    return newCategory;
   } catch (error) {
-    console.error('Error creating category:', error);
     if (error instanceof Error && error.message?.includes('UNIQUE constraint failed')) {
-      return NextResponse.json(
-        { error: 'Category with this name already exists' },
-        { status: 409 }
-      );
+      throw new Error('Category with this name already exists');
     }
-    return NextResponse.json(
-      { error: 'Failed to create category' },
-      { status: 500 }
-    );
+    throw error;
   }
-}
+});

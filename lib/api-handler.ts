@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from './auth';
+import { CacheControl, createCachedResponse, generateETag, handleConditionalRequest } from './cache-headers';
 
 export type APIHandler<T = unknown> = (req: NextRequest) => Promise<T>;
 
@@ -8,14 +9,25 @@ interface APIError {
   details?: unknown;
 }
 
+export interface HandlerOptions {
+  requireAuth?: boolean;
+  cacheControl?: string;
+  enableETag?: boolean;
+}
+
 export function createAuthenticatedHandler<T>(
   handler: APIHandler<T>,
-  requireAuth = true
+  options: HandlerOptions | boolean = true
 ) {
+  // Handle legacy boolean parameter
+  const config: HandlerOptions = typeof options === 'boolean' 
+    ? { requireAuth: options } 
+    : { requireAuth: true, ...options };
+
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
       // Check authentication if required
-      if (requireAuth && !(await isAuthenticated())) {
+      if (config.requireAuth && !(await isAuthenticated())) {
         return NextResponse.json(
           { error: 'Unauthorized' } satisfies APIError,
           { status: 401 }
@@ -25,7 +37,25 @@ export function createAuthenticatedHandler<T>(
       // Execute the handler
       const result = await handler(req);
       
-      // Return success response
+      // Handle caching if enabled
+      if (config.cacheControl || config.enableETag) {
+        const cacheControl = config.cacheControl || CacheControl.API_DEFAULT;
+        
+        // Check for conditional requests with ETag
+        if (config.enableETag && result) {
+          const etag = generateETag(result);
+          const conditionalResponse = handleConditionalRequest(req, etag);
+          if (conditionalResponse) {
+            return conditionalResponse;
+          }
+          return createCachedResponse(result, cacheControl);
+        }
+        
+        // Just add cache headers without ETag
+        return createCachedResponse(result, cacheControl);
+      }
+      
+      // Return normal response
       return NextResponse.json(result);
     } catch (error) {
       // Log error for debugging

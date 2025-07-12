@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { createAuthenticatedHandler, parseRequestBody } from '@/lib/api-handler';
+import { CacheControl } from '@/lib/cache-headers';
 import { getNoteById, updateNote, deleteNote } from '@/lib/notes';
 import type { NoteInput } from '@/types/note';
 
@@ -8,43 +9,31 @@ interface RouteParams {
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    if (!await isAuthenticated()) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+  const handler = createAuthenticatedHandler(async () => {
     const { id } = await params;
     const note = await getNoteById(id);
     
     if (!note) {
-      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+      throw new Error('Note not found');
     }
     
-    return NextResponse.json(note);
-  } catch (error) {
-    console.error('Error fetching note:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch note' },
-      { status: 500 }
-    );
-  }
+    return note;
+  }, {
+    cacheControl: CacheControl.API_DETAIL,
+    enableETag: true
+  });
+  
+  return handler(request);
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    if (!await isAuthenticated()) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+  const handler = createAuthenticatedHandler(async (req) => {
     const { id } = await params;
-    const body: NoteInput = await request.json();
+    const body = await parseRequestBody<NoteInput>(req);
     
     // Validate required fields
     if (!body.title || !body.content || !body.category) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      throw new Error('Missing required fields');
     }
     
     // Default language to markdown
@@ -53,38 +42,26 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const note = await updateNote(id, body);
     
     if (!note) {
-      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+      throw new Error('Note not found');
     }
     
-    return NextResponse.json(note);
-  } catch (error) {
-    console.error('Error updating note:', error);
-    return NextResponse.json(
-      { error: 'Failed to update note' },
-      { status: 500 }
-    );
-  }
+    return note;
+  });
+  
+  return handler(request);
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    if (!await isAuthenticated()) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+  const handler = createAuthenticatedHandler(async () => {
     const { id } = await params;
     const success = await deleteNote(id);
     
     if (!success) {
-      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+      throw new Error('Note not found');
     }
     
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting note:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete note' },
-      { status: 500 }
-    );
-  }
+    return { success: true };
+  });
+  
+  return handler(request);
 }
