@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Heart, FileText, Tag, Zap, Plus, ChevronLeft, Settings, Code, Server, Database, Cloud, Shield, Folder } from 'lucide-react';
+import { Menu, Heart, FileText, Tag, Plus, ChevronLeft, Settings, Code, Server, Database, Cloud, Shield, Folder } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language-context';
@@ -132,12 +132,6 @@ export function Sidebar({ categories, tags, className, onClose }: SidebarProps) 
           <Heart className="h-4 w-4 mr-2" />
           {t.nav.favorites}
         </Button>
-        <Link href="/notes/templates">
-          <Button variant="ghost" className="w-full justify-start">
-            <Zap className="h-4 w-4 mr-2" />
-            Templates
-          </Button>
-        </Link>
       </div>
 
       <div>
