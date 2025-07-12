@@ -199,7 +199,6 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             return (
               <a
                 href={href}
-                className="text-primary hover:underline underline-offset-2"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -212,17 +211,16 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             <img
               src={src}
               alt={alt || ''}
-              className="rounded-lg shadow-md max-w-full h-auto my-4"
             />
           ),
           strong: ({ children }) => (
-            <strong className="font-semibold">{children}</strong>
+            <strong>{children}</strong>
           ),
           em: ({ children }) => (
-            <em className="italic">{children}</em>
+            <em>{children}</em>
           ),
           del: ({ children }) => (
-            <del className="line-through text-muted-foreground">{children}</del>
+            <del>{children}</del>
           ),
         }}
       >

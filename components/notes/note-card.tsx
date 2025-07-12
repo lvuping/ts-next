@@ -48,23 +48,38 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
 
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
-  const handleToggleFavorite = useCallback(async () => {
+  const handleToggleFavorite = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (isTogglingFavorite) return; // Prevent multiple clicks
     
     setIsTogglingFavorite(true);
+    
+    // Apply optimistic update immediately
+    if (onToggleFavorite) {
+      onToggleFavorite(note.id);
+    }
+    
     try {
       const response = await fetch(`/api/notes/${note.id}/favorite`, {
         method: 'POST',
       });
       
-      if (response.ok && onToggleFavorite) {
-        onToggleFavorite(note.id);
-      } else {
+      if (!response.ok) {
         // Revert optimistic update if failed
         console.error('Failed to toggle favorite status');
+        if (onToggleFavorite) {
+          // Revert by calling again
+          onToggleFavorite(note.id);
+        }
       }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
+      // Revert optimistic update on error
+      if (onToggleFavorite) {
+        onToggleFavorite(note.id);
+      }
     } finally {
       setIsTogglingFavorite(false);
     }

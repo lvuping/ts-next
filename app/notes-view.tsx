@@ -169,44 +169,16 @@ export function NotesView() {
     const noteToUpdate = notes.find(note => note.id === id);
     if (!noteToUpdate) return;
     
-    // Optimistic update
+    // Optimistic update - toggle the favorite status
     const updateNote = (note: Note) => 
-      note.id === id ? { ...note, favorite: !note.favorite } : note;
+      note.id === id ? { ...note, favorite: !noteToUpdate.favorite } : note;
     
     setNotes(notes.map(updateNote));
     setDisplayedNotes(displayedNotes.map(updateNote));
     
-    try {
-      // Verify with server response
-      const response = await fetch(`/api/notes/${id}`, {
-        method: 'GET',
-      });
-      
-      if (response.ok) {
-        const updatedNote = await response.json();
-        // Update with server response
-        const syncNote = (note: Note) => 
-          note.id === id ? updatedNote : note;
-        
-        setNotes(prevNotes => prevNotes.map(syncNote));
-        setDisplayedNotes(prevDisplayed => prevDisplayed.map(syncNote));
-      } else {
-        // Revert on error
-        const revertNote = (note: Note) => 
-          note.id === id ? noteToUpdate : note;
-        
-        setNotes(prevNotes => prevNotes.map(revertNote));
-        setDisplayedNotes(prevDisplayed => prevDisplayed.map(revertNote));
-      }
-    } catch (error) {
-      // Revert on error
-      const revertNote = (note: Note) => 
-        note.id === id ? noteToUpdate : note;
-      
-      setNotes(prevNotes => prevNotes.map(revertNote));
-      setDisplayedNotes(prevDisplayed => prevDisplayed.map(revertNote));
-      console.error('Failed to sync favorite status:', error);
-    }
+    // Note: The actual API call is handled in the NoteCard component
+    // This function just handles the optimistic update
+    // If the API call fails, the NoteCard will not call this function
   };
 
 
