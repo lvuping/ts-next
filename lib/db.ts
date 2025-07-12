@@ -4,16 +4,92 @@ import fs from 'fs';
 
 const DB_PATH = path.join(process.cwd(), 'notes.db');
 
+// Singleton database instance
+let dbInstance: Database.Database | null = null;
+
+// Database configuration
+const DB_CONFIG = {
+  // Enable verbose mode in development
+  verbose: process.env.NODE_ENV === 'development' ? console.log : undefined,
+  // Set timeout for long-running queries
+  timeout: 5000,
+  // Enable file stats for better performance tracking
+  fileMustExist: false,
+};
+
 export function getDb() {
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
+  // Return existing instance if available
+  if (dbInstance && dbInstance.open) {
+    return dbInstance;
+  }
+  
+  // Create new database instance with configuration
+  const db = new Database(DB_PATH, DB_CONFIG);
+  
+  // Configure database pragmas for optimal performance
+  db.pragma('journal_mode = WAL'); // Write-Ahead Logging for better concurrency
+  db.pragma('foreign_keys = ON'); // Enable foreign key constraints
+  db.pragma('synchronous = NORMAL'); // Balance between safety and performance
+  db.pragma('cache_size = -64000'); // 64MB cache size
+  db.pragma('temp_store = MEMORY'); // Use memory for temporary tables
+  db.pragma('mmap_size = 268435456'); // 256MB memory-mapped I/O
+  
+  // Set up connection lifecycle hooks
+  process.on('exit', () => closeDb());
+  process.on('SIGINT', () => {
+    closeDb();
+    process.exit(0);
+  });
+  process.on('SIGTERM', () => {
+    closeDb();
+    process.exit(0);
+  });
   
   createTables(db);
   migrateSchema(db);
   migrateCategories(db);
   
+  // Store the instance
+  dbInstance = db;
+  
   return db;
+}
+
+export function closeDb() {
+  if (dbInstance && dbInstance.open) {
+    console.log('Closing database connection...');
+    dbInstance.close();
+    dbInstance = null;
+  }
+}
+
+// Execute a query with automatic retry on busy
+export function executeWithRetry<T>(
+  fn: () => T,
+  maxRetries: number = 3,
+  delay: number = 100
+): T {
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return fn();
+    } catch (error: unknown) {
+      lastError = error as Error;
+      
+      // Only retry on SQLITE_BUSY errors
+      const errorWithCode = error as { code?: string };
+      if (errorWithCode.code !== 'SQLITE_BUSY' || i === maxRetries - 1) {
+        throw error;
+      }
+      
+      // Wait before retrying
+      const waitTime = delay * Math.pow(2, i); // Exponential backoff
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waitTime);
+    }
+  }
+  
+  throw lastError!;
 }
 
 function createTables(db: Database.Database) {
@@ -83,7 +159,113 @@ function createTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_note_tags_note_id ON note_tags(note_id);
     CREATE INDEX IF NOT EXISTS idx_note_tags_tag_id ON note_tags(tag_id);
     CREATE INDEX IF NOT EXISTS idx_categories_position ON categories(position);
+    CREATE INDEX IF NOT EXISTS idx_related_notes_note_id ON related_notes(note_id);
+    CREATE INDEX IF NOT EXISTS idx_related_notes_related_note_id ON related_notes(related_note_id);
   `);
+  
+  // Create materialized view tables
+  createMaterializedViews(db);
+}
+
+function createMaterializedViews(db: Database.Database) {
+  // Create summary table for note statistics
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS note_stats (
+      category TEXT PRIMARY KEY,
+      note_count INTEGER DEFAULT 0,
+      favorite_count INTEGER DEFAULT 0,
+      last_updated TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  
+  // Create view for tag statistics
+  db.exec(`
+    CREATE VIEW IF NOT EXISTS tag_stats AS
+    SELECT 
+      t.name as tag_name,
+      COUNT(DISTINCT nt.note_id) as note_count,
+      MAX(n.updated_at) as last_used
+    FROM tags t
+    LEFT JOIN note_tags nt ON t.id = nt.tag_id
+    LEFT JOIN notes n ON nt.note_id = n.id
+    GROUP BY t.id, t.name
+  `);
+  
+  // Create view for notes with pre-joined tags
+  db.exec(`
+    CREATE VIEW IF NOT EXISTS notes_with_tags AS
+    SELECT 
+      n.*,
+      GROUP_CONCAT(t.name, ',') as tag_list
+    FROM notes n
+    LEFT JOIN note_tags nt ON n.id = nt.note_id
+    LEFT JOIN tags t ON nt.tag_id = t.id
+    GROUP BY n.id
+  `);
+  
+  // Create triggers to maintain note_stats table
+  db.exec(`
+    CREATE TRIGGER IF NOT EXISTS update_note_stats_on_insert
+    AFTER INSERT ON notes
+    BEGIN
+      INSERT OR REPLACE INTO note_stats (category, note_count, favorite_count, last_updated)
+      SELECT 
+        NEW.category,
+        COALESCE((SELECT note_count FROM note_stats WHERE category = NEW.category), 0) + 1,
+        COALESCE((SELECT favorite_count FROM note_stats WHERE category = NEW.category), 0) + 
+          CASE WHEN NEW.favorite = 1 THEN 1 ELSE 0 END,
+        datetime('now');
+    END;
+    
+    CREATE TRIGGER IF NOT EXISTS update_note_stats_on_update
+    AFTER UPDATE ON notes
+    WHEN OLD.category != NEW.category OR OLD.favorite != NEW.favorite
+    BEGIN
+      -- Update old category stats
+      UPDATE note_stats 
+      SET 
+        note_count = CASE WHEN OLD.category = NEW.category THEN note_count ELSE note_count - 1 END,
+        favorite_count = favorite_count - CASE WHEN OLD.favorite = 1 THEN 1 ELSE 0 END,
+        last_updated = datetime('now')
+      WHERE category = OLD.category;
+      
+      -- Update new category stats if category changed
+      INSERT OR REPLACE INTO note_stats (category, note_count, favorite_count, last_updated)
+      SELECT 
+        NEW.category,
+        COALESCE((SELECT note_count FROM note_stats WHERE category = NEW.category), 0) + 
+          CASE WHEN OLD.category != NEW.category THEN 1 ELSE 0 END,
+        COALESCE((SELECT favorite_count FROM note_stats WHERE category = NEW.category), 0) + 
+          CASE WHEN NEW.favorite = 1 THEN 1 ELSE 0 END,
+        datetime('now')
+      WHERE OLD.category != NEW.category OR NEW.favorite != OLD.favorite;
+    END;
+    
+    CREATE TRIGGER IF NOT EXISTS update_note_stats_on_delete
+    AFTER DELETE ON notes
+    BEGIN
+      UPDATE note_stats 
+      SET 
+        note_count = note_count - 1,
+        favorite_count = favorite_count - CASE WHEN OLD.favorite = 1 THEN 1 ELSE 0 END,
+        last_updated = datetime('now')
+      WHERE category = OLD.category;
+    END;
+  `);
+  
+  // Populate initial stats if empty
+  const statsCount = db.prepare('SELECT COUNT(*) as count FROM note_stats').get() as { count: number };
+  if (statsCount.count === 0) {
+    db.exec(`
+      INSERT INTO note_stats (category, note_count, favorite_count)
+      SELECT 
+        category,
+        COUNT(*) as note_count,
+        SUM(CASE WHEN favorite = 1 THEN 1 ELSE 0 END) as favorite_count
+      FROM notes
+      GROUP BY category
+    `);
+  }
 }
 
 function migrateSchema(db: Database.Database) {

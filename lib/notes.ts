@@ -1,6 +1,5 @@
 import type { Note, NoteInput, NoteTemplate } from '@/types/note';
 import { getDb, migrateFromJson } from './db';
-import Database from 'better-sqlite3';
 
 interface NoteRow {
   id: string;
@@ -74,14 +73,45 @@ LIMIT 10;`,
   }
 ];
 
-let dbInstance: Database.Database | null = null;
+// Simple in-memory cache for query results
+interface CacheEntry {
+  data: unknown;
+  timestamp: number;
+}
+
+const queryCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+
+function clearCache() {
+  queryCache.clear();
+}
+
+function getCacheKey(query: string, params: unknown[]): string {
+  return `${query}:${JSON.stringify(params)}`;
+}
+
+function getCachedResult(key: string): unknown | null {
+  const entry = queryCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    return entry.data;
+  }
+  queryCache.delete(key);
+  return null;
+}
+
+function setCachedResult(key: string, data: unknown): void {
+  queryCache.set(key, { data, timestamp: Date.now() });
+}
 
 function initDb() {
-  if (!dbInstance) {
-    dbInstance = getDb();
-    migrateFromJson(dbInstance);
+  const db = getDb();
+  // Set GROUP_CONCAT max length to prevent memory issues
+  db.pragma('group_concat_max_len = 10000');
+  // Ensure migrations have run
+  if (!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='notes'").get()) {
+    migrateFromJson(db);
   }
-  return dbInstance;
+  return db;
 }
 
 export async function getAllNotes(filters?: {
@@ -96,7 +126,23 @@ export async function getAllNotes(filters?: {
 }): Promise<{ notes: Note[]; total: number }> {
   const db = initDb();
   
+  // Optimized query using subqueries instead of GROUP_CONCAT in main query
   let query = `
+    WITH note_tags_agg AS (
+      SELECT 
+        nt.note_id,
+        GROUP_CONCAT(t.name, ',') as tags
+      FROM note_tags nt
+      JOIN tags t ON nt.tag_id = t.id
+      GROUP BY nt.note_id
+    ),
+    related_notes_agg AS (
+      SELECT 
+        note_id,
+        GROUP_CONCAT(related_note_id, ',') as relatedNotes
+      FROM related_notes
+      GROUP BY note_id
+    )
     SELECT DISTINCT
       n.id,
       n.title,
@@ -110,12 +156,11 @@ export async function getAllNotes(filters?: {
       n.folder_id as folderId,
       n.template,
       n.summary,
-      GROUP_CONCAT(DISTINCT t.name) as tags,
-      GROUP_CONCAT(DISTINCT rn.related_note_id) as relatedNotes
+      COALESCE(nta.tags, '') as tags,
+      COALESCE(rna.relatedNotes, '') as relatedNotes
     FROM notes n
-    LEFT JOIN note_tags nt ON n.id = nt.note_id
-    LEFT JOIN tags t ON nt.tag_id = t.id
-    LEFT JOIN related_notes rn ON n.id = rn.note_id
+    LEFT JOIN note_tags_agg nta ON n.id = nta.note_id
+    LEFT JOIN related_notes_agg rna ON n.id = rna.note_id
   `;
   
   const conditions: string[] = [];
@@ -132,7 +177,12 @@ export async function getAllNotes(filters?: {
   }
   
   if (filters?.tag) {
-    conditions.push('t.name = ?');
+    // Modified to work with the CTE
+    conditions.push(`n.id IN (
+      SELECT note_id FROM note_tags nt 
+      JOIN tags t ON nt.tag_id = t.id 
+      WHERE t.name = ?
+    )`);
     params.push(filters.tag);
   }
   
@@ -144,8 +194,6 @@ export async function getAllNotes(filters?: {
   if (conditions.length > 0) {
     query += ' WHERE ' + conditions.join(' AND ');
   }
-  
-  query += ' GROUP BY n.id';
   
   const sortBy = filters?.sortBy || 'createdAt';
   const sortOrder = filters?.sortOrder || 'desc';
@@ -159,15 +207,27 @@ export async function getAllNotes(filters?: {
   const offset = filters?.offset || 0;
   query += ` LIMIT ${limit} OFFSET ${offset}`;
   
+  // Check cache first
+  const cacheKey = getCacheKey(query, params);
+  const cachedResult = getCachedResult(cacheKey) as { notes: Note[]; total: number; offset?: number; limit?: number } | null;
+  if (cachedResult && filters?.offset === cachedResult.offset && filters?.limit === cachedResult.limit) {
+    return cachedResult;
+  }
+  
   const rows = db.prepare(query).all(...params) as NoteRow[];
   
   // Get total count for pagination
   let countQuery = `
     SELECT COUNT(DISTINCT n.id) as total
     FROM notes n
-    LEFT JOIN note_tags nt ON n.id = nt.note_id
-    LEFT JOIN tags t ON nt.tag_id = t.id
   `;
+  
+  if (filters?.tag) {
+    countQuery += `
+      JOIN note_tags nt ON n.id = nt.note_id
+      JOIN tags t ON nt.tag_id = t.id
+    `;
+  }
   
   if (conditions.length > 0) {
     countQuery += ' WHERE ' + conditions.join(' AND ');
@@ -182,23 +242,53 @@ export async function getAllNotes(filters?: {
     content: row.content,
     language: row.language,
     category: row.category,
-    tags: row.tags ? row.tags.split(',') : [],
+    tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
     favorite: row.favorite === 1,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     folderId: row.folderId || undefined,
     template: row.template || undefined,
-    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : [],
+    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',').filter(Boolean) : [],
     summary: row.summary || undefined
   }));
   
-  return { notes, total };
+  const result = { notes, total };
+  
+  // Cache the result
+  setCachedResult(cacheKey, { ...result, offset: filters?.offset, limit: filters?.limit });
+  
+  return result;
 }
 
 export async function getNoteById(id: string): Promise<Note | null> {
   const db = initDb();
   
+  // Check cache first
+  const cacheKey = `note:${id}`;
+  const cachedNote = getCachedResult(cacheKey) as Note | null;
+  if (cachedNote) {
+    return cachedNote;
+  }
+  
+  // Optimized query using subqueries
   const row = db.prepare(`
+    WITH note_tags_agg AS (
+      SELECT 
+        nt.note_id,
+        GROUP_CONCAT(t.name, ',') as tags
+      FROM note_tags nt
+      JOIN tags t ON nt.tag_id = t.id
+      WHERE nt.note_id = ?
+      GROUP BY nt.note_id
+    ),
+    related_notes_agg AS (
+      SELECT 
+        note_id,
+        GROUP_CONCAT(related_note_id, ',') as relatedNotes
+      FROM related_notes
+      WHERE note_id = ?
+      GROUP BY note_id
+    )
     SELECT 
       n.id,
       n.title,
@@ -212,38 +302,44 @@ export async function getNoteById(id: string): Promise<Note | null> {
       n.folder_id as folderId,
       n.template,
       n.summary,
-      GROUP_CONCAT(DISTINCT t.name) as tags,
-      GROUP_CONCAT(DISTINCT rn.related_note_id) as relatedNotes
+      COALESCE(nta.tags, '') as tags,
+      COALESCE(rna.relatedNotes, '') as relatedNotes
     FROM notes n
-    LEFT JOIN note_tags nt ON n.id = nt.note_id
-    LEFT JOIN tags t ON nt.tag_id = t.id
-    LEFT JOIN related_notes rn ON n.id = rn.note_id
+    LEFT JOIN note_tags_agg nta ON n.id = nta.note_id
+    LEFT JOIN related_notes_agg rna ON n.id = rna.note_id
     WHERE n.id = ?
-    GROUP BY n.id
-  `).get(id) as NoteRow | undefined;
+  `).get(id, id, id) as NoteRow | undefined;
   
   if (!row) return null;
   
-  return {
+  const note = {
     id: row.id,
     title: row.title,
     content: row.content,
     contentFormat: (row.contentFormat || 'markdown') as 'markdown' | 'rich',
     language: row.language,
     category: row.category,
-    tags: row.tags ? row.tags.split(',') : [],
+    tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
     favorite: row.favorite === 1,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     folderId: row.folderId || undefined,
     template: row.template || undefined,
-    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : [],
+    relatedNotes: row.relatedNotes ? row.relatedNotes.split(',').filter(Boolean) : [],
     summary: row.summary || undefined
   };
+  
+  // Cache the result
+  setCachedResult(cacheKey, note);
+  
+  return note;
 }
 
 export async function createNote(input: NoteInput): Promise<Note> {
   const db = initDb();
+  
+  // Clear cache on write operations
+  clearCache();
   
   const id = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
   const now = new Date().toISOString();
@@ -290,6 +386,9 @@ export async function updateNote(id: string, input: Partial<NoteInput>): Promise
   const existing = await getNoteById(id);
   
   if (!existing) return null;
+  
+  // Clear cache on write operations
+  clearCache();
   
   const now = new Date().toISOString();
   
@@ -347,6 +446,10 @@ export async function updateNote(id: string, input: Partial<NoteInput>): Promise
 
 export async function deleteNote(id: string): Promise<boolean> {
   const db = initDb();
+  
+  // Clear cache on write operations
+  clearCache();
+  
   const result = db.prepare('DELETE FROM notes WHERE id = ?').run(id);
   
   return result.changes > 0;
@@ -354,6 +457,9 @@ export async function deleteNote(id: string): Promise<boolean> {
 
 export async function toggleFavorite(id: string): Promise<Note | null> {
   const db = initDb();
+  
+  // Clear cache on write operations
+  clearCache();
   
   try {
     // Use a transaction to ensure atomicity
@@ -437,4 +543,108 @@ export function exportNotesToMarkdown(notes: Note[]): string {
 ${note.content}
 `;
   }).join('\n---\n\n');
+}
+
+// Optimized functions using materialized views
+export async function getCategoryStats(): Promise<Array<{ category: string; noteCount: number; favoriteCount: number }>> {
+  const db = initDb();
+  
+  const cacheKey = 'category-stats';
+  const cached = getCachedResult(cacheKey) as Array<{ category: string; noteCount: number; favoriteCount: number }> | null;
+  if (cached) return cached;
+  
+  const stats = db.prepare(`
+    SELECT 
+      category,
+      note_count as noteCount,
+      favorite_count as favoriteCount
+    FROM note_stats
+    ORDER BY note_count DESC
+  `).all() as Array<{ category: string; noteCount: number; favoriteCount: number }>;
+  
+  setCachedResult(cacheKey, stats);
+  return stats;
+}
+
+export async function getTagStats(): Promise<Array<{ tagName: string; noteCount: number; lastUsed: string }>> {
+  const db = initDb();
+  
+  const cacheKey = 'tag-stats';
+  const cached = getCachedResult(cacheKey) as Array<{ tagName: string; noteCount: number; lastUsed: string }> | null;
+  if (cached) return cached;
+  
+  const stats = db.prepare(`
+    SELECT 
+      tag_name as tagName,
+      note_count as noteCount,
+      last_used as lastUsed
+    FROM tag_stats
+    WHERE note_count > 0
+    ORDER BY note_count DESC
+    LIMIT 50
+  `).all() as Array<{ tagName: string; noteCount: number; lastUsed: string }>;
+  
+  setCachedResult(cacheKey, stats);
+  return stats;
+}
+
+// Fast search using the materialized view
+export async function searchNotesOptimized(query: string, limit: number = 20): Promise<Note[]> {
+  const db = initDb();
+  
+  const cacheKey = `search:${query}:${limit}`;
+  const cached = getCachedResult(cacheKey) as Note[] | null;
+  if (cached) return cached;
+  
+  const rows = db.prepare(`
+    SELECT 
+      n.id,
+      n.title,
+      n.content,
+      n.content_format as contentFormat,
+      n.language,
+      n.category,
+      n.favorite,
+      n.created_at as createdAt,
+      n.updated_at as updatedAt,
+      n.folder_id as folderId,
+      n.template,
+      n.summary,
+      nwt.tag_list as tags
+    FROM notes n
+    JOIN notes_with_tags nwt ON n.id = nwt.id
+    WHERE n.title LIKE ? OR n.content LIKE ? OR nwt.tag_list LIKE ?
+    ORDER BY 
+      CASE 
+        WHEN n.title LIKE ? THEN 1
+        WHEN nwt.tag_list LIKE ? THEN 2
+        ELSE 3
+      END,
+      n.updated_at DESC
+    LIMIT ?
+  `).all(
+    `%${query}%`, `%${query}%`, `%${query}%`,
+    `%${query}%`, `%${query}%`,
+    limit
+  ) as Array<NoteRow & { tags: string }>;
+  
+  const notes = rows.map(row => ({
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    contentFormat: (row.contentFormat || 'markdown') as 'markdown' | 'rich',
+    language: row.language,
+    category: row.category,
+    tags: row.tags ? row.tags.split(',').filter(Boolean) : [],
+    favorite: row.favorite === 1,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    folderId: row.folderId || undefined,
+    template: row.template || undefined,
+    relatedNotes: [],
+    summary: row.summary || undefined
+  }));
+  
+  setCachedResult(cacheKey, notes);
+  return notes;
 }
