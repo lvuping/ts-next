@@ -33,7 +33,10 @@ export function useNotes(filters?: NotesFilters) {
       }
       return response.json() as Promise<{ notes: Note[]; total: number }>
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (garbage collection time)
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false // Don't refetch on mount if data exists
   })
 }
 
@@ -177,9 +180,16 @@ export function useDeleteNote() {
       
       const previousNotes = queryClient.getQueryData<Note[]>(queryKeys.notes.lists())
       
-      queryClient.setQueriesData<Note[]>(
-        { queryKey: queryKeys.notes.all },
-        (old) => old?.filter(note => note.id !== id)
+      // Update all queries containing the note
+      queryClient.setQueriesData<{ notes: Note[]; total: number }>(
+        { queryKey: ['notes', 'list'] },
+        (old) => {
+          if (!old) return old
+          return {
+            notes: old.notes.filter(note => note.id !== id),
+            total: old.total - 1
+          }
+        }
       )
       
       return { previousNotes }
@@ -189,8 +199,11 @@ export function useDeleteNote() {
         queryClient.setQueryData(queryKeys.notes.lists(), context.previousNotes)
       }
     },
-    onSuccess: () => {
-      invalidator.invalidateNotes()
+    onSettled: () => {
+      // Only invalidate after a delay to prevent immediate refetch
+      setTimeout(() => {
+        invalidator.invalidateNotes()
+      }, 100)
     },
   })
 }
@@ -201,14 +214,11 @@ export function useToggleFavorite() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      console.log('[DEBUG] useToggleFavorite - Sending PATCH request for note:', id)
       const response = await fetch(`/api/notes/${id}/favorite`, {
         method: 'PATCH',
       })
-      console.log('[DEBUG] useToggleFavorite - Response status:', response.status)
       
       if (!response.ok) {
-        console.error('[DEBUG] useToggleFavorite - Failed with status:', response.status)
         throw new Error('Failed to toggle favorite')
       }
       
@@ -218,32 +228,45 @@ export function useToggleFavorite() {
       await queryClient.cancelQueries({ queryKey: queryKeys.notes.detail(id) })
       await queryClient.cancelQueries({ queryKey: queryKeys.notes.all })
       
-      const previousNote = queryClient.getQueryData<Note>(queryKeys.notes.detail(id))
-      const previousNotes = queryClient.getQueryData<Note[]>(queryKeys.notes.lists())
+      // Get all cached data
+      const previousQueries = new Map()
       
-      if (previousNote) {
-        const updatedNote = { ...previousNote, favorite: !previousNote.favorite }
-        queryClient.setQueryData(queryKeys.notes.detail(id), updatedNote)
-        
-        queryClient.setQueriesData<Note[]>(
-          { queryKey: queryKeys.notes.all },
-          (old) => old?.map(note => note.id === id ? updatedNote : note)
-        )
-      }
+      // Update all queries containing the note
+      queryClient.setQueriesData<{ notes: Note[]; total: number }>(
+        { queryKey: ['notes', 'list'] },
+        (old) => {
+          if (!old) return old
+          previousQueries.set(['notes', 'list'], old)
+          
+          return {
+            ...old,
+            notes: old.notes.map(note => {
+              if (note.id === id) {
+                return { ...note, favorite: !note.favorite }
+              }
+              return note
+            })
+          }
+        }
+      )
       
-      return { previousNote, previousNotes }
+      return { previousQueries }
     },
     onError: (err, id, context) => {
-      if (context?.previousNote) {
-        queryClient.setQueryData(queryKeys.notes.detail(id), context.previousNote)
-      }
-      if (context?.previousNotes) {
-        queryClient.setQueryData(queryKeys.notes.lists(), context.previousNotes)
+      // Restore all previous queries
+      if (context?.previousQueries) {
+        context.previousQueries.forEach((data, key) => {
+          queryClient.setQueryData(key, data)
+        })
       }
     },
-    onSuccess: (data) => {
-      invalidator.invalidateNote(data.id)
-      invalidator.invalidateNotes()
+    onSettled: (data) => {
+      // Only invalidate specific note detail after a delay
+      if (data) {
+        setTimeout(() => {
+          invalidator.invalidateNote(data.id)
+        }, 100)
+      }
     },
   })
 }

@@ -13,7 +13,7 @@ import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { EmptyState } from '@/components/ui/empty-state';
 import dynamic from 'next/dynamic';
 import { FileText } from 'lucide-react';
-import { useNotes, useToggleFavorite } from '@/src/hooks/queries/use-notes';
+import { useNotes, useToggleFavorite, useDeleteNote } from '@/src/hooks/queries/use-notes';
 import { useCategories } from '@/src/hooks/queries/use-categories';
 import { useTags } from '@/src/hooks/queries/use-tags';
 
@@ -70,9 +70,13 @@ export function NotesView() {
   const { data: categoriesData } = useCategories();
   const { data: tagsData } = useTags();
   const toggleFavoriteMutation = useToggleFavorite();
+  const deleteNoteMutation = useDeleteNote();
   
-  const notes = useMemo(() => notesData?.notes || [], [notesData?.notes]);
-  const totalNotes = notesData?.total || 0;
+  const notes = useMemo(() => {
+    if (!notesData || typeof notesData !== 'object') return [];
+    return (notesData as { notes?: Note[]; total?: number })?.notes || [];
+  }, [notesData]);
+  const totalNotes = notesData && typeof notesData === 'object' ? (notesData as { notes?: Note[]; total?: number })?.total || 0 : 0;
   const categories = categoriesData || [];
   const tags = tagsData || [];
   const hasMore = allNotes.length < totalNotes;
@@ -161,19 +165,36 @@ export function NotesView() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
+    deleteNoteMutation.mutate(id);
+    // Optimistically remove from local state
     setAllNotes(prev => prev.filter(note => note.id !== id));
-  };
+  }, [deleteNoteMutation]);
 
   const handleToggleFavorite = useCallback((id: string) => {
-    toggleFavoriteMutation.mutate(id);
-    // Optimistically update local state
+    // Find the note to get current favorite status
+    const noteToToggle = allNotes.find(n => n.id === id);
+    if (!noteToToggle) return;
+    
+    // Optimistically update local state first
     setAllNotes(prevNotes => 
       prevNotes.map(note => 
         note.id === id ? { ...note, favorite: !note.favorite } : note
       )
     );
-  }, [toggleFavoriteMutation]);
+    
+    // Then trigger the mutation
+    toggleFavoriteMutation.mutate(id, {
+      onError: () => {
+        // Revert on error
+        setAllNotes(prevNotes => 
+          prevNotes.map(note => 
+            note.id === id ? { ...note, favorite: noteToToggle.favorite } : note
+          )
+        );
+      }
+    });
+  }, [toggleFavoriteMutation, allNotes]);
 
 
   const activeFilter = searchParams.get('category') || searchParams.get('tag') || 

@@ -36,23 +36,26 @@ export const REVALIDATION_TAGS = {
 export async function revalidateNoteData(noteId?: string) {
   if (typeof window === 'undefined') {
     // Server-side only
-    try {
-      const { revalidateTag, revalidatePath } = await import('next/cache');
-      
-      // Revalidate all notes list
-      revalidateTag(REVALIDATION_TAGS.ALL_NOTES);
-      
-      // Revalidate specific note if ID provided
-      if (noteId) {
-        revalidateTag(REVALIDATION_TAGS.NOTE(noteId));
-        revalidatePath(`/notes/view/${noteId}`);
+    // Make revalidation non-blocking for better performance
+    setImmediate(async () => {
+      try {
+        const { revalidateTag, revalidatePath } = await import('next/cache');
+        
+        // Revalidate all notes list
+        revalidateTag(REVALIDATION_TAGS.ALL_NOTES);
+        
+        // Revalidate specific note if ID provided
+        if (noteId) {
+          revalidateTag(REVALIDATION_TAGS.NOTE(noteId));
+          // Only revalidate path if not deleting
+          revalidatePath(`/notes/view/${noteId}`);
+        }
+        
+        // Skip home page revalidation for better performance
+      } catch (error) {
+        console.error('Revalidation error:', error);
       }
-      
-      // Revalidate home page
-      revalidatePath('/');
-    } catch (error) {
-      console.error('Revalidation error:', error);
-    }
+    });
   }
 }
 

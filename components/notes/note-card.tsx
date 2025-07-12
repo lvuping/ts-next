@@ -38,68 +38,38 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
   
   const noteUrl = isViewMode ? `/notes/edit/${note.id}` : `/notes/view/${note.id}`;
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     if (!confirm('Are you sure you want to delete this note?')) return;
     
     setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/notes/${note.id}`, {
-        method: 'DELETE',
-      });
-      
-      if (response.ok && onDelete) {
-        onDelete(note.id);
-      }
-    } catch (error) {
-      console.error('Failed to delete note:', error);
-    } finally {
-      setIsDeleting(false);
+    
+    // Call the delete handler which will handle the API call
+    if (onDelete) {
+      onDelete(note.id);
     }
+    
+    // Reset after a short delay
+    setTimeout(() => setIsDeleting(false), 300);
   }, [note.id, onDelete]);
 
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
-  const handleToggleFavorite = useCallback(async (e: React.MouseEvent) => {
+  const handleToggleFavorite = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    console.log('[DEBUG] Toggle favorite clicked for note:', note.id);
-    console.log('[DEBUG] Current favorite status:', note.favorite);
     
     if (isTogglingFavorite) return; // Prevent multiple clicks
     
     setIsTogglingFavorite(true);
     
-    // Apply optimistic update immediately
+    // Call the mutation handler which will handle everything
     if (onToggleFavorite) {
       onToggleFavorite(note.id);
     }
     
-    try {
-      console.log('[DEBUG] Sending PATCH request to:', `/api/notes/${note.id}/favorite`);
-      const response = await fetch(`/api/notes/${note.id}/favorite`, {
-        method: 'PATCH',
-      });
-      console.log('[DEBUG] Response status:', response.status);
-      
-      if (!response.ok) {
-        // Revert optimistic update if failed
-        console.error('[DEBUG] Failed to toggle favorite status, status:', response.status);
-        if (onToggleFavorite) {
-          // Revert by calling again
-          onToggleFavorite(note.id);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to toggle favorite:', error);
-      // Revert optimistic update on error
-      if (onToggleFavorite) {
-        onToggleFavorite(note.id);
-      }
-    } finally {
-      setIsTogglingFavorite(false);
-    }
-  }, [note.id, note.favorite, onToggleFavorite, isTogglingFavorite]);
+    // Reset after a short delay to prevent rapid clicks
+    setTimeout(() => setIsTogglingFavorite(false), 300);
+  }, [note.id, onToggleFavorite, isTogglingFavorite]);
 
   const handleCopyContent = useCallback(async () => {
     try {
