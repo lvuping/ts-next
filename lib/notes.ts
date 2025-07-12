@@ -333,7 +333,7 @@ export async function toggleFavorite(id: string): Promise<Note | null> {
   
   try {
     // Use a transaction to ensure atomicity
-    const result = db.transaction(() => {
+    db.transaction(() => {
       const existing = db.prepare('SELECT * FROM notes WHERE id = ?').get(id) as NoteRow | undefined;
       
       if (!existing) return null;
@@ -341,11 +341,10 @@ export async function toggleFavorite(id: string): Promise<Note | null> {
       const newFavoriteValue = existing.favorite ? 0 : 1;
       db.prepare('UPDATE notes SET favorite = ?, updated_at = ? WHERE id = ?')
         .run(newFavoriteValue, new Date().toISOString(), id);
-      
-      return getNoteById(id);
     })();
     
-    return result;
+    // Get the updated note after the transaction completes
+    return getNoteById(id);
   } catch (error) {
     console.error('Error toggling favorite:', error);
     throw error;
