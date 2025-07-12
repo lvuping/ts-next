@@ -63,6 +63,9 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('[DEBUG] Toggle favorite clicked for note:', note.id);
+    console.log('[DEBUG] Current favorite status:', note.favorite);
+    
     if (isTogglingFavorite) return; // Prevent multiple clicks
     
     setIsTogglingFavorite(true);
@@ -73,13 +76,15 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
     }
     
     try {
+      console.log('[DEBUG] Sending PATCH request to:', `/api/notes/${note.id}/favorite`);
       const response = await fetch(`/api/notes/${note.id}/favorite`, {
         method: 'PATCH',
       });
+      console.log('[DEBUG] Response status:', response.status);
       
       if (!response.ok) {
         // Revert optimistic update if failed
-        console.error('Failed to toggle favorite status');
+        console.error('[DEBUG] Failed to toggle favorite status, status:', response.status);
         if (onToggleFavorite) {
           // Revert by calling again
           onToggleFavorite(note.id);
@@ -94,7 +99,7 @@ function NoteCardComponent({ note, viewMode = 'card', onDelete, onToggleFavorite
     } finally {
       setIsTogglingFavorite(false);
     }
-  }, [note.id, onToggleFavorite, isTogglingFavorite]);
+  }, [note.id, note.favorite, onToggleFavorite, isTogglingFavorite]);
 
   const handleCopyContent = useCallback(async () => {
     try {

@@ -201,11 +201,14 @@ export function useToggleFavorite() {
   
   return useMutation({
     mutationFn: async (id: string) => {
+      console.log('[DEBUG] useToggleFavorite - Sending PATCH request for note:', id)
       const response = await fetch(`/api/notes/${id}/favorite`, {
         method: 'PATCH',
       })
+      console.log('[DEBUG] useToggleFavorite - Response status:', response.status)
       
       if (!response.ok) {
+        console.error('[DEBUG] useToggleFavorite - Failed with status:', response.status)
         throw new Error('Failed to toggle favorite')
       }
       

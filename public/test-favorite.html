@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorite Toggle Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #666;
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0051cc;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+            background: #f0f0f0;
+            border-left: 3px solid #666;
+        }
+        .log-entry.debug {
+            border-left-color: #0070f3;
+        }
+        .log-entry.error {
+            border-left-color: #dc3545;
+            background: #fee;
+        }
+        #logs {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Favorite Toggle Test Page</h1>
+        
+        <div class="test-section">
+            <h2>1. Authentication</h2>
+            <button id="authBtn" onclick="authenticate()">Login</button>
+            <div id="authResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Test API Methods</h2>
+            <button id="testMethodsBtn" onclick="testApiMethods()" disabled>Test Methods</button>
+            <div id="methodsResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Direct Favorite Toggle Test</h2>
+            <input type="text" id="noteId" placeholder="Enter note ID" style="padding: 8px; margin-right: 10px;">
+            <button id="toggleBtn" onclick="toggleFavorite()" disabled>Toggle Favorite</button>
+            <div id="toggleResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Network Logs</h2>
+            <button onclick="clearLogs()">Clear Logs</button>
+            <div id="logs"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. Browser Info</h2>
+            <div id="browserInfo" class="result info"></div>
+        </div>
+    </div>
+
+    <script>
+        let authCookie = '';
+        const logs = [];
+
+        // Initialize
+        window.onload = () => {
+            showBrowserInfo();
+            log('Page loaded. Ready for testing.', 'info');
+            
+            // Override fetch to log all requests
+            const originalFetch = window.fetch;
+            window.fetch = function(...args) {
+                const [url, options = {}] = args;
+                log(`FETCH: ${options.method || 'GET'} ${url}`, 'debug');
+                if (options.body) {
+                    log(`Body: ${options.body}`, 'debug');
+                }
+                return originalFetch.apply(this, args);
+            };
+        };
+
+        function showBrowserInfo() {
+            const info = `User Agent: ${navigator.userAgent}
+Cache: ${navigator.onLine ? 'Online' : 'Offline'}
+Time: ${new Date().toISOString()}`;
+            document.getElementById('browserInfo').textContent = info;
+        }
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString().substr(11, 12);
+            const logEntry = { timestamp, message, type };
+            logs.push(logEntry);
+            updateLogsDisplay();
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function updateLogsDisplay() {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = logs.map(entry => 
+                `<div class="log-entry ${entry.type}">[${entry.timestamp}] ${entry.message}</div>`
+            ).join('');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function clearLogs() {
+            logs.length = 0;
+            updateLogsDisplay();
+        }
+
+        async function authenticate() {
+            const btn = document.getElementById('authBtn');
+            const result = document.getElementById('authResult');
+            
+            btn.disabled = true;
+            result.className = 'result info';
+            result.textContent = 'Authenticating...';
+            
+            try {
+                log('Starting authentication...', 'info');
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: 'changeme123' })
+                });
+                
+                log(`Auth response: ${response.status} ${response.statusText}`, response.ok ? 'info' : 'error');
+                
+                if (response.ok) {
+                    // Note: In a real browser, we can't access set-cookie header due to CORS
+                    // But the cookie will be set automatically
+                    result.className = 'result success';
+                    result.textContent = 'Authentication successful! Cookie set automatically.';
+                    
+                    // Enable other buttons
+                    document.getElementById('testMethodsBtn').disabled = false;
+                    document.getElementById('toggleBtn').disabled = false;
+                    
+                    log('Authentication successful', 'info');
+                } else {
+                    throw new Error(`Authentication failed: ${response.status}`);
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `Error: ${error.message}`;
+                log(`Auth error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function testApiMethods() {
+            const btn = document.getElementById('testMethodsBtn');
+            const result = document.getElementById('methodsResult');
+            
+            btn.disabled = true;
+            result.className = 'result info';
+            result.textContent = 'Testing API methods...';
+            
+            const testNoteId = 'test-' + Date.now();
+            const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+            const results = [];
+            
+            for (const method of methods) {
+                try {
+                    log(`Testing ${method} method...`, 'debug');
+                    const response = await fetch(`/api/notes/${testNoteId}/favorite`, {
+                        method: method,
+                        credentials: 'include'
+                    });
+                    
+                    const expectedStatus = method === 'PATCH' ? [401, 404] : [405];
+                    const isExpected = expectedStatus.includes(response.status);
+                    
+                    results.push(`${method}: ${response.status} ${isExpected ? '✓' : '✗'}`);
+                    log(`${method} returned ${response.status}`, isExpected ? 'info' : 'error');
+                } catch (error) {
+                    results.push(`${method}: ERROR - ${error.message}`);
+                    log(`${method} error: ${error.message}`, 'error');
+                }
+            }
+            
+            result.className = 'result success';
+            result.textContent = results.join('\n');
+            btn.disabled = false;
+        }
+
+        async function toggleFavorite() {
+            const noteId = document.getElementById('noteId').value.trim();
+            if (!noteId) {
+                alert('Please enter a note ID');
+                return;
+            }
+            
+            const btn = document.getElementById('toggleBtn');
+            const result = document.getElementById('toggleResult');
+            
+            btn.disabled = true;
+            result.className = 'result info';
+            result.textContent = 'Toggling favorite...';
+            
+            try {
+                log(`Toggling favorite for note: ${noteId}`, 'info');
+                
+                // This is the critical test - what method is actually being used?
+                const response = await fetch(`/api/notes/${noteId}/favorite`, {
+                    method: 'PATCH',  // This should be PATCH
+                    credentials: 'include'
+                });
+                
+                log(`Toggle response: ${response.status} ${response.statusText}`, response.ok ? 'info' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.className = 'result success';
+                    result.textContent = `Success! Note ${noteId} favorite status: ${data.favorite}`;
+                    log(`Toggle successful. New favorite status: ${data.favorite}`, 'info');
+                } else if (response.status === 401) {
+                    throw new Error('Unauthorized - Please login first');
+                } else if (response.status === 404) {
+                    throw new Error('Note not found');
+                } else if (response.status === 405) {
+                    throw new Error('Method not allowed - This indicates the PATCH method is not being used correctly!');
+                } else {
+                    throw new Error(`Failed with status: ${response.status}`);
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `Error: ${error.message}`;
+                log(`Toggle error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
