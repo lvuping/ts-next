@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedHandler, parseRequestBody } from '@/lib/api-handler';
 import { getAllNotes, createNote, importNotes, exportNotesToMarkdown } from '@/lib/notes';
 import { CacheControl } from '@/lib/cache-headers';
+import { revalidateNoteData } from '@/lib/revalidation-config';
 import type { NoteInput } from '@/types/note';
 
 export const GET = createAuthenticatedHandler(async (request: NextRequest) => {
@@ -46,6 +47,10 @@ export const POST = createAuthenticatedHandler(async (request: NextRequest) => {
   body.language = body.language || 'markdown';
 
   const note = await createNote(body);
+  
+  // Revalidate cached data
+  await revalidateNoteData(note.id);
+  
   return note;
 });
 
