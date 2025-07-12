@@ -39,8 +39,15 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
     }
   }, [content, isInitialized]);
 
+  // Preprocess content to clean up headings
+  let processedContent = content
+    // Remove markdown heading syntax that appears in the rendered text
+    .replace(/^(#{1,6})\s+\1\s+(.*)$/gm, '$1 $2')
+    // Fix double hash marks
+    .replace(/^(#{1,6})\s+(.*?)(\s*\1)*$/gm, '$1 $2');
+  
   // Process content to handle callouts/admonitions
-  const processedContent = content.replace(
+  processedContent = processedContent.replace(
     /^> \[!(note|info|warning|error|success)\]\s*(.*)$/gm,
     (match, type: string, title: string) => {
       const icons: Record<string, string> = {
