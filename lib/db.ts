@@ -91,6 +91,7 @@ function migrateSchema(db: Database.Database) {
   const columns = db.prepare("PRAGMA table_info(notes)").all() as Array<{ name: string }>;
   const hasCategoryId = columns.some(col => col.name === 'category_id');
   const hasSummary = columns.some(col => col.name === 'summary');
+  const hasContentFormat = columns.some(col => col.name === 'content_format');
   
   if (!hasCategoryId) {
     console.log('Adding category_id column to notes table...');
@@ -111,6 +112,17 @@ function migrateSchema(db: Database.Database) {
     } catch (error) {
       // If the column already exists or there's another error, log it but continue
       console.log('Note: Could not add summary column:', error);
+    }
+  }
+  
+  if (!hasContentFormat) {
+    console.log('Adding content_format column to notes table...');
+    try {
+      db.exec('ALTER TABLE notes ADD COLUMN content_format TEXT DEFAULT "markdown"');
+      console.log('Successfully added content_format column');
+    } catch (error) {
+      // If the column already exists or there's another error, log it but continue
+      console.log('Note: Could not add content_format column:', error);
     }
   }
 }

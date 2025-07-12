@@ -52,6 +52,7 @@ export default function EditNotePage({ params }: Props) {
   const [formData, setFormData] = useState<Partial<NoteInput>>({
     title: '',
     content: '',
+    contentFormat: 'markdown',
     language: 'markdown',
     category: 'Other',
     tags: [],
@@ -87,6 +88,7 @@ export default function EditNotePage({ params }: Props) {
         setFormData({
           title: data.title,
           content: data.content,
+          contentFormat: data.contentFormat || 'markdown',
           language: data.language,
           category: data.category,
           tags: data.tags,
@@ -472,6 +474,8 @@ export default function EditNotePage({ params }: Props) {
                     <RichTextEditor
                       value={formData.content || ''}
                       onChange={(content) => setFormData({ ...formData, content })}
+                      contentFormat={formData.contentFormat}
+                      onContentFormatChange={(format) => setFormData({ ...formData, contentFormat: format })}
                       placeholder="Start writing your code or notes..."
                       className="h-full"
                       minHeight="calc(100vh - 400px)"

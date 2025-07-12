@@ -305,10 +305,17 @@ export function ViewNoteContent({ note, categories = [] }: ViewNoteContentProps)
               <div className="h-full bg-gradient-to-b from-background to-background/80 rounded-xl shadow-lg border-2 border-border/50 hover:border-primary/30 transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10">
                 <div className="h-full p-1">
                   <div className="p-6 overflow-auto h-full bg-background">
-                    <MarkdownRenderer
-                      content={note.content}
-                      className="prose prose-neutral dark:prose-invert max-w-none"
-                    />
+                    {note.contentFormat === 'rich' ? (
+                      <div 
+                        className="prose prose-neutral dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: note.content }}
+                      />
+                    ) : (
+                      <MarkdownRenderer
+                        content={note.content}
+                        className="prose prose-neutral dark:prose-invert max-w-none"
+                      />
+                    )}
                   </div>
                 </div>
               </div>

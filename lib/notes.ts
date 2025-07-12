@@ -6,6 +6,7 @@ interface NoteRow {
   id: string;
   title: string;
   content: string;
+  contentFormat: string | null;
   language: string;
   category: string;
   favorite: number;
@@ -98,6 +99,7 @@ export async function getAllNotes(filters?: {
       n.id,
       n.title,
       n.content,
+      n.content_format as contentFormat,
       n.language,
       n.category,
       n.favorite,
@@ -177,6 +179,7 @@ export async function getNoteById(id: string): Promise<Note | null> {
       n.id,
       n.title,
       n.content,
+      n.content_format as contentFormat,
       n.language,
       n.category,
       n.favorite,
@@ -201,6 +204,7 @@ export async function getNoteById(id: string): Promise<Note | null> {
     id: row.id,
     title: row.title,
     content: row.content,
+    contentFormat: (row.contentFormat || 'markdown') as 'markdown' | 'rich',
     language: row.language,
     category: row.category,
     tags: row.tags ? row.tags.split(',') : [],
@@ -223,13 +227,14 @@ export async function createNote(input: NoteInput): Promise<Note> {
   db.transaction(() => {
     db.prepare(`
       INSERT INTO notes (
-        id, title, content, language, category, favorite, 
+        id, title, content, content_format, language, category, favorite, 
         created_at, updated_at, folder_id, template, summary
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       input.title,
       input.content,
+      input.contentFormat || 'markdown',
       input.language,
       input.category,
       input.favorite ? 1 : 0,
@@ -269,6 +274,7 @@ export async function updateNote(id: string, input: Partial<NoteInput>): Promise
       UPDATE notes SET
         title = ?,
         content = ?,
+        content_format = ?,
         language = ?,
         category = ?,
         favorite = ?,
@@ -280,6 +286,7 @@ export async function updateNote(id: string, input: Partial<NoteInput>): Promise
     `).run(
       input.title ?? existing.title,
       input.content ?? existing.content,
+      input.contentFormat ?? existing.contentFormat ?? 'markdown',
       input.language ?? existing.language,
       input.category ?? existing.category,
       input.favorite !== undefined ? (input.favorite ? 1 : 0) : (existing.favorite ? 1 : 0),

@@ -4,6 +4,7 @@ export interface Note {
   id: string;
   title: string;
   content: string;
+  contentFormat?: 'markdown' | 'rich';
   language: string;
   category: string;
   tags: string[];
@@ -19,6 +20,7 @@ export interface Note {
 export interface NoteInput {
   title: string;
   content: string;
+  contentFormat?: 'markdown' | 'rich';
   language: string;
   category: string;
   tags: string[];
