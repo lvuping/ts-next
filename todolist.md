@@ -7,14 +7,14 @@
 #### 전체 최적화 전략
 데이터 로딩과 렌더링 성능 개선을 위한 6단계 최적화 플랜
 
-#### Phase 1: 클라이언트 사이드 캐싱 (TanStack Query) ✅ 진행중
+#### Phase 1: 클라이언트 사이드 캐싱 (TanStack Query) ✅ 완료
 - [x] TanStack Query 설치 (`@tanstack/react-query`)
 - [x] QueryProvider 생성 (`/src/providers/query-provider.tsx`)
 - [x] Root layout에 QueryProvider 통합
-- [ ] React Query DevTools 설치 (대기중)
-- [ ] 커스텀 데이터 페칭 훅 생성
-- [ ] 쿼리 무효화 전략 구현
-- [ ] 모든 mutations에 optimistic updates 추가
+- [x] React Query DevTools 설치
+- [x] 커스텀 데이터 페칭 훅 생성 (`/src/hooks/queries/`)
+- [x] 쿼리 무효화 전략 구현
+- [x] 모든 mutations에 optimistic updates 추가
 
 #### Phase 2: 서버 사이드 페이지네이션
 - [ ] `getAllNotes()`에 페이지네이션 파라미터 추가
@@ -48,8 +48,9 @@
 
 ### 진행 상황
 - **시작일**: 2025-07-12
-- **현재 단계**: Phase 1 - TanStack Query 설치 및 기본 설정 완료
-- **다음 작업**: React Query DevTools 설치 및 커스텀 훅 생성
+- **Phase 1 완료일**: 2025-07-12
+- **현재 단계**: Phase 1 완료 - 모든 클라이언트 사이드 캐싱 구현 완료
+- **다음 작업**: Phase 2 - 서버 사이드 페이지네이션 구현
 
 ## Must check
 - 모든 수정후엔 반드시 기능 테스트를 진행해줘. (route, event)

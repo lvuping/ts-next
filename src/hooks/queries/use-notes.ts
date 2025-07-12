@@ -9,6 +9,8 @@ interface NotesFilters {
   favorite?: boolean
   sortBy?: 'createdAt' | 'updatedAt' | 'title'
   sortOrder?: 'asc' | 'desc'
+  limit?: number
+  offset?: number
 }
 
 export function useNotes(filters?: NotesFilters) {
@@ -20,12 +22,16 @@ export function useNotes(filters?: NotesFilters) {
       if (filters?.category) params.append('category', filters.category)
       if (filters?.tag) params.append('tag', filters.tag)
       if (filters?.favorite !== undefined) params.append('favorite', String(filters.favorite))
+      if (filters?.sortBy) params.append('sortBy', filters.sortBy)
+      if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder)
+      if (filters?.limit !== undefined) params.append('limit', String(filters.limit))
+      if (filters?.offset !== undefined) params.append('offset', String(filters.offset))
       
       const response = await fetch(`/api/notes?${params.toString()}`)
       if (!response.ok) {
         throw new Error('Failed to fetch notes')
       }
-      return response.json() as Promise<Note[]>
+      return response.json() as Promise<{ notes: Note[]; total: number }>
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   })

@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
     const ids = searchParams.get('ids')?.split(',').filter(Boolean);
     
     // Get notes - either specific IDs or all notes
-    const allNotes = await getAllNotes();
+    const result = await getAllNotes();
     const notes = ids 
-      ? allNotes.filter(note => ids.includes(note.id))
-      : allNotes;
+      ? result.notes.filter(note => ids.includes(note.id))
+      : result.notes;
     
     if (notes.length === 0) {
       return NextResponse.json(

@@ -40,7 +40,8 @@ export function NotesView() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
-  const [displayedNotes, setDisplayedNotes] = useState<Note[]>([]);
+  const [totalNotes, setTotalNotes] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('card');
@@ -79,7 +80,14 @@ export function NotesView() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Reset pagination when search params change
+        setNotes([]);
+        setCurrentPage(0);
+        
         const params = new URLSearchParams(searchParams);
+        params.set('limit', NOTES_PER_PAGE.toString());
+        params.set('offset', '0');
+        
         // Parallel API calls
         const [notesResponse, metadataResponse] = await Promise.all([
           fetch(`/api/notes?${params.toString()}`),
@@ -88,10 +96,9 @@ export function NotesView() {
 
         if (notesResponse.ok) {
           const data = await notesResponse.json();
-          setNotes(data);
-          // Initially display first batch
-          setDisplayedNotes(data.slice(0, NOTES_PER_PAGE));
-          setHasMore(data.length > NOTES_PER_PAGE);
+          setNotes(data.notes);
+          setTotalNotes(data.total);
+          setHasMore(data.notes.length < data.total);
         }
 
         if (metadataResponse.ok) {
@@ -110,18 +117,29 @@ export function NotesView() {
   }, [searchParams]);
 
   // Load more notes when reaching the bottom
-  const loadMoreNotes = useCallback(() => {
+  const loadMoreNotes = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     
     setLoadingMore(true);
-    setTimeout(() => {
-      const currentLength = displayedNotes.length;
-      const nextBatch = notes.slice(currentLength, currentLength + NOTES_PER_PAGE);
-      setDisplayedNotes(prev => [...prev, ...nextBatch]);
-      setHasMore(currentLength + nextBatch.length < notes.length);
+    try {
+      const nextPage = currentPage + 1;
+      const params = new URLSearchParams(searchParams);
+      params.set('limit', NOTES_PER_PAGE.toString());
+      params.set('offset', (nextPage * NOTES_PER_PAGE).toString());
+      
+      const response = await fetch(`/api/notes?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotes(prev => [...prev, ...data.notes]);
+        setCurrentPage(nextPage);
+        setHasMore(notes.length + data.notes.length < data.total);
+      }
+    } catch (error) {
+      console.error('Failed to load more notes:', error);
+    } finally {
       setLoadingMore(false);
-    }, 300); // Small delay to show loading state
-  }, [displayedNotes.length, notes, hasMore, loadingMore]);
+    }
+  }, [currentPage, notes.length, hasMore, loadingMore, searchParams]);
 
   // Setup intersection observer for infinite scroll
   useEffect(() => {
@@ -161,7 +179,7 @@ export function NotesView() {
 
   const handleDelete = (id: string) => {
     setNotes(notes.filter(note => note.id !== id));
-    setDisplayedNotes(displayedNotes.filter(note => note.id !== id));
+    setTotalNotes(prev => prev - 1);
   };
 
   const handleToggleFavorite = useCallback((id: string) => {
@@ -172,11 +190,7 @@ export function NotesView() {
       )
     );
     
-    setDisplayedNotes(prevDisplayedNotes => 
-      prevDisplayedNotes.map(note => 
-        note.id === id ? { ...note, favorite: !note.favorite } : note
-      )
-    );
+    // No need to update displayedNotes as we're using notes directly
   }, []);
 
 
@@ -201,7 +215,7 @@ export function NotesView() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  Showing {displayedNotes.length} of {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+                  Showing {notes.length} of {totalNotes} {totalNotes === 1 ? 'note' : 'notes'}
                   {activeFilter && (
                     <span> • Filtered by: <span className="font-medium">{activeFilter}</span></span>
                   )}
@@ -260,7 +274,7 @@ export function NotesView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {displayedNotes.map((note) => (
+                  {notes.map((note) => (
                     <NoteCard
                       key={note.id}
                       note={note}
@@ -276,7 +290,7 @@ export function NotesView() {
           ) : (
             <>
               <div className={`grid gap-6 ${viewMode === 'detailed' ? 'grid-cols-1 max-w-4xl mx-auto' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-                {displayedNotes.map((note) => (
+                {notes.map((note) => (
                   <NoteCard
                     key={note.id}
                     note={note}

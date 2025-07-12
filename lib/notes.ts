@@ -91,7 +91,9 @@ export async function getAllNotes(filters?: {
   favorite?: boolean;
   sortBy?: 'createdAt' | 'updatedAt' | 'title';
   sortOrder?: 'asc' | 'desc';
-}): Promise<Note[]> {
+  limit?: number;
+  offset?: number;
+}): Promise<{ notes: Note[]; total: number }> {
   const db = initDb();
   
   let query = `
@@ -152,9 +154,29 @@ export async function getAllNotes(filters?: {
   
   query += ` ORDER BY ${sortColumn} ${sortOrder.toUpperCase()}`;
   
+  // Add pagination
+  const limit = filters?.limit || 50; // Default limit of 50
+  const offset = filters?.offset || 0;
+  query += ` LIMIT ${limit} OFFSET ${offset}`;
+  
   const rows = db.prepare(query).all(...params) as NoteRow[];
   
-  return rows.map(row => ({
+  // Get total count for pagination
+  let countQuery = `
+    SELECT COUNT(DISTINCT n.id) as total
+    FROM notes n
+    LEFT JOIN note_tags nt ON n.id = nt.note_id
+    LEFT JOIN tags t ON nt.tag_id = t.id
+  `;
+  
+  if (conditions.length > 0) {
+    countQuery += ' WHERE ' + conditions.join(' AND ');
+  }
+  
+  const countResult = db.prepare(countQuery).get(...params) as { total: number };
+  const total = countResult.total;
+  
+  const notes = rows.map(row => ({
     id: row.id,
     title: row.title,
     content: row.content,
@@ -169,6 +191,8 @@ export async function getAllNotes(filters?: {
     relatedNotes: row.relatedNotes ? row.relatedNotes.split(',') : [],
     summary: row.summary || undefined
   }));
+  
+  return { notes, total };
 }
 
 export async function getNoteById(id: string): Promise<Note | null> {

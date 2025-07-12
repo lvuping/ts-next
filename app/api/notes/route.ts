@@ -10,10 +10,14 @@ export const GET = createAuthenticatedHandler(async (request: NextRequest) => {
     category: searchParams.get('category') || undefined,
     tag: searchParams.get('tag') || undefined,
     favorite: searchParams.get('favorite') === 'true' ? true : undefined,
+    sortBy: (searchParams.get('sortBy') as 'createdAt' | 'updatedAt' | 'title') || undefined,
+    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined,
+    limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
+    offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined,
   };
 
-  const notes = await getAllNotes(filters);
-  return notes;
+  const result = await getAllNotes(filters);
+  return result;
 });
 
 export const POST = createAuthenticatedHandler(async (request: NextRequest) => {
@@ -48,10 +52,10 @@ export async function PUT(request: NextRequest) {
       const { noteIds } = await parseRequestBody<{ noteIds: string[] }>(req);
       
       // Fetch the notes based on IDs
-      const allNotes = await getAllNotes({});
+      const result = await getAllNotes({});
       const notesToExport = noteIds.length > 0 
-        ? allNotes.filter(note => noteIds.includes(note.id))
-        : allNotes;
+        ? result.notes.filter(note => noteIds.includes(note.id))
+        : result.notes;
       
       const markdown = exportNotesToMarkdown(notesToExport);
       return markdown;
