@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(pnpm why:*)",
+      "Bash(pnpm run build:*)"
+    ],
+    "deny": []
+  }
+}

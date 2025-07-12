@@ -6,7 +6,7 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     if (!await isAuthenticated()) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
