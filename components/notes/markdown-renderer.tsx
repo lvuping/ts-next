@@ -39,12 +39,16 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
     }
   }, [content, isInitialized]);
 
-  // Preprocess content to clean up headings
+  // Preprocess content to clean up headings and improve formatting
   let processedContent = content
     // Remove markdown heading syntax that appears in the rendered text
     .replace(/^(#{1,6})\s+\1\s+(.*)$/gm, '$1 $2')
     // Fix double hash marks
-    .replace(/^(#{1,6})\s+(.*?)(\s*\1)*$/gm, '$1 $2');
+    .replace(/^(#{1,6})\s+(.*?)(\s*\1)*$/gm, '$1 $2')
+    // Ensure proper line breaks after headings
+    .replace(/^(#{1,6})\s+(.*)$/gm, '$1 $2\n')
+    // Convert triple dash to proper horizontal rule
+    .replace(/^---$/gm, '\n---\n');
   
   // Process content to handle callouts/admonitions
   processedContent = processedContent.replace(
