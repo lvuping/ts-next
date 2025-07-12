@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "NODE_OPTIONS='--no-deprecation' next dev",
+    "build": "NODE_OPTIONS='--no-deprecation' next build",
+    "start": "NODE_OPTIONS='--no-deprecation' next start",
+    "lint": "NODE_OPTIONS='--no-deprecation' next lint",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed"

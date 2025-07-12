@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { NoteCard } from '@/components/notes/note-card';
@@ -13,6 +13,9 @@ import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { EmptyState } from '@/components/ui/empty-state';
 import dynamic from 'next/dynamic';
 import { FileText } from 'lucide-react';
+import { useNotes, useToggleFavorite } from '@/src/hooks/queries/use-notes';
+import { useCategories } from '@/src/hooks/queries/use-categories';
+import { useTags } from '@/src/hooks/queries/use-tags';
 
 // Lazy load heavy components
 const SearchDialog = dynamic(() => import('@/components/notes/search-dialog').then(mod => ({ default: mod.SearchDialog })), {
@@ -39,21 +42,41 @@ const NOTES_PER_PAGE = 12;
 export function NotesView() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [totalNotes, setTotalNotes] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
-  const [categories, setCategories] = useState<Array<{ id: number; name: string; color: string; icon: string; position: number }>>([]);
-  const [tags, setTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('card');
-  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Parse search params for filters
+  const filters = {
+    search: searchParams.get('search') || undefined,
+    category: searchParams.get('category') || undefined,
+    tag: searchParams.get('tag') || undefined,
+    favorite: searchParams.get('favorite') === 'true' ? true : undefined,
+    sortBy: (searchParams.get('sortBy') as 'createdAt' | 'updatedAt' | 'title' | undefined) || undefined,
+    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc' | undefined) || undefined,
+    limit: NOTES_PER_PAGE,
+    offset: currentPage * NOTES_PER_PAGE,
+  };
+  
+  // Use React Query hooks
+  const { data: notesData, isLoading: notesLoading } = useNotes(filters);
+  const { data: categoriesData } = useCategories();
+  const { data: tagsData } = useTags();
+  const toggleFavoriteMutation = useToggleFavorite();
+  
+  const notes = useMemo(() => notesData?.notes || [], [notesData?.notes]);
+  const totalNotes = notesData?.total || 0;
+  const categories = categoriesData || [];
+  const tags = tagsData || [];
+  const hasMore = allNotes.length < totalNotes;
+  const loading = notesLoading && currentPage === 0;
 
   // Keyboard shortcuts including platform-specific search trigger
   useKeyboardShortcuts([
@@ -77,69 +100,30 @@ export function NotesView() {
     }
   }, []);
 
+  // Reset pagination when search params change
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Reset pagination when search params change
-        setNotes([]);
-        setCurrentPage(0);
-        
-        const params = new URLSearchParams(searchParams);
-        params.set('limit', NOTES_PER_PAGE.toString());
-        params.set('offset', '0');
-        
-        // Parallel API calls
-        const [notesResponse, metadataResponse] = await Promise.all([
-          fetch(`/api/notes?${params.toString()}`),
-          fetch('/api/notes/metadata')
-        ]);
-
-        if (notesResponse.ok) {
-          const data = await notesResponse.json();
-          setNotes(data.notes);
-          setTotalNotes(data.total);
-          setHasMore(data.notes.length < data.total);
-        }
-
-        if (metadataResponse.ok) {
-          const data = await metadataResponse.json();
-          setCategories(data.categories);
-          setTags(data.tags);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
+    setCurrentPage(0);
+    setAllNotes([]);
   }, [searchParams]);
+  
+  // Update accumulated notes when data changes
+  useEffect(() => {
+    if (currentPage === 0) {
+      setAllNotes(notes);
+    } else if (notes.length > 0 && !allNotes.some(n => n.id === notes[0].id)) {
+      setAllNotes(prev => [...prev, ...notes]);
+    }
+  }, [notes, currentPage, allNotes]);
 
   // Load more notes when reaching the bottom
-  const loadMoreNotes = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+  const loadMoreNotes = useCallback(() => {
+    if (loadingMore || !hasMore || notesLoading) return;
     
     setLoadingMore(true);
-    try {
-      const nextPage = currentPage + 1;
-      const params = new URLSearchParams(searchParams);
-      params.set('limit', NOTES_PER_PAGE.toString());
-      params.set('offset', (nextPage * NOTES_PER_PAGE).toString());
-      
-      const response = await fetch(`/api/notes?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setNotes(prev => [...prev, ...data.notes]);
-        setCurrentPage(nextPage);
-        setHasMore(notes.length + data.notes.length < data.total);
-      }
-    } catch (error) {
-      console.error('Failed to load more notes:', error);
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [currentPage, notes.length, hasMore, loadingMore, searchParams]);
+    setCurrentPage(prev => prev + 1);
+    // Loading state will be handled by React Query
+    setTimeout(() => setLoadingMore(false), 100);
+  }, [hasMore, loadingMore, notesLoading]);
 
   // Setup intersection observer for infinite scroll
   useEffect(() => {
@@ -178,20 +162,18 @@ export function NotesView() {
   };
 
   const handleDelete = (id: string) => {
-    setNotes(notes.filter(note => note.id !== id));
-    setTotalNotes(prev => prev - 1);
+    setAllNotes(prev => prev.filter(note => note.id !== id));
   };
 
   const handleToggleFavorite = useCallback((id: string) => {
-    // Use functional state update to avoid stale state issues
-    setNotes(prevNotes => 
+    toggleFavoriteMutation.mutate(id);
+    // Optimistically update local state
+    setAllNotes(prevNotes => 
       prevNotes.map(note => 
         note.id === id ? { ...note, favorite: !note.favorite } : note
       )
     );
-    
-    // No need to update displayedNotes as we're using notes directly
-  }, []);
+  }, [toggleFavoriteMutation]);
 
 
   const activeFilter = searchParams.get('category') || searchParams.get('tag') || 
@@ -215,7 +197,7 @@ export function NotesView() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  Showing {notes.length} of {totalNotes} {totalNotes === 1 ? 'note' : 'notes'}
+                  Showing {allNotes.length} of {totalNotes} {totalNotes === 1 ? 'note' : 'notes'}
                   {activeFilter && (
                     <span> • Filtered by: <span className="font-medium">{activeFilter}</span></span>
                   )}
@@ -244,14 +226,14 @@ export function NotesView() {
         <div className="flex-1 overflow-auto p-4 md:p-6 bg-gradient-to-br from-background via-background to-primary/5">
           {showStats && (
             <div className="mb-6 animate-fade-in">
-              <StatsCard notes={notes} categories={categories} tags={tags} />
+              <StatsCard notes={allNotes} categories={categories} tags={tags} />
             </div>
           )}
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <p className="text-muted-foreground">Loading notes...</p>
             </div>
-          ) : notes.length === 0 ? (
+          ) : allNotes.length === 0 ? (
             <EmptyState
               icon={FileText}
               title="No notes found"
@@ -274,7 +256,7 @@ export function NotesView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {notes.map((note) => (
+                  {allNotes.map((note) => (
                     <NoteCard
                       key={note.id}
                       note={note}
@@ -290,7 +272,7 @@ export function NotesView() {
           ) : (
             <>
               <div className={`grid gap-6 ${viewMode === 'detailed' ? 'grid-cols-1 max-w-4xl mx-auto' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-                {notes.map((note) => (
+                {allNotes.map((note) => (
                   <NoteCard
                     key={note.id}
                     note={note}
@@ -323,13 +305,13 @@ export function NotesView() {
       <SearchDialog 
         open={showSearch} 
         onOpenChange={setShowSearch} 
-        notes={notes} 
+        notes={allNotes} 
       />
       
       <ExportDialog
         open={showExport}
         onOpenChange={setShowExport}
-        notes={notes}
+        notes={allNotes}
       />
       
       <ImportDialog

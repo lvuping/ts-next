@@ -10,14 +10,18 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // 기본 캐시 시간: 5분
-            staleTime: 5 * 60 * 1000,
-            // 가비지 컬렉션 시간: 10분
-            gcTime: 10 * 60 * 1000,
+            // 기본 캐시 시간: 30분 (새로고침 시에도 캐시 유지)
+            staleTime: 30 * 60 * 1000,
+            // 가비지 컬렉션 시간: 1시간
+            gcTime: 60 * 60 * 1000,
             // 재시도 횟수
             retry: 1,
-            // 리포커스 시 재검증 비활성화 (필요시 개별 쿼리에서 활성화)
+            // 리포커스 시 재검증 비활성화
             refetchOnWindowFocus: false,
+            // 재연결 시 재검증 비활성화
+            refetchOnReconnect: false,
+            // 마운트 시 항상 재검증하되, 캐시가 있으면 먼저 보여줌
+            refetchOnMount: true,
           },
         },
       })
