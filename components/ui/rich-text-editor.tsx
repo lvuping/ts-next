@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '@/components/notes/markdown-renderer';
 import {
   Bold,
   Italic,
@@ -339,14 +338,12 @@ export function RichTextEditor({
         )
       ) : (
         <div 
-          className="rounded-lg border p-4 prose prose-sm dark:prose-invert max-w-none"
+          className="rounded-lg border p-4"
           style={{ minHeight }}
         >
           {value ? (
             contentFormat === 'markdown' || editorMode === 'markdown' ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {value}
-              </ReactMarkdown>
+              <MarkdownRenderer content={value} />
             ) : (
               <div dangerouslySetInnerHTML={{ __html: value }} />
             )
